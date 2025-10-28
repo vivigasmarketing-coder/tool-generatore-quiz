@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generatore di Quiz Avanzato</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .tool-container {
+            display: grid;
+            grid-template-columns: 1.1fr 1fr;
+            gap: 2rem;
+            height: calc(100vh - 4rem);
+        }
+        @media (max-width: 1024px) {
+            .tool-container {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+        }
+        .panel {
+            background-color: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+        }
+        .scrollable-panel {
+             overflow-y: auto;
+        }
+        .question-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: box-shadow 0.2s;
+        }
+        .question-card:focus-within {
+            box-shadow: 0 0 0 2px #3b82f6;
+        }
+        .color-swatch {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.2s;
+            display: inline-block;
+        }
+        .color-swatch.selected {
+            border-color: #3b82f6;
+            transform: scale(1.1);
+        }
+        #code-output, #import-code-area {
+            min-height: 150px;
+            font-family: monospace;
+            font-size: 0.875rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            resize: vertical;
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-primary {
+             background-color: #3b82f6;
+             color: white;
+        }
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+        .btn-secondary {
+            background-color: #e5e7eb;
+            color: #1f2937;
+        }
+        .btn-secondary:hover {
+            background-color: #d1d5db;
+        }
+        .btn-danger {
+            background-color: #ef4444;
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+        .btn-success {
+            background-color: #22c55e;
+            color: white;
+        }
+        .btn-success:hover {
+            background-color: #16a34a;
+        }
+        .btn-warning {
+            background-color: #f59e0b;
+            color: white;
+        }
+        .btn-warning:hover {
+            background-color: #d97706;
+        }
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+        #quiz-editor-view { display: none; }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            width: 90%;
+            max-width: 600px;
+        }
+        .custom-color-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+        }
+        input[type="color"] {
+            -webkit-appearance: none;
+            width: 35px;
+            height: 35px;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        input[type="color"]::-webkit-color-swatch {
+            border: 1px solid #ddd;
+            border-radius: 50%;
+        }
+        .gemini-btn {
+            flex-shrink: 0;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="p-8">
+    <header class="mb-8 text-center">
+        <h1 class="text-4xl font-bold text-gray-800">Generatore di Quiz Avanzato</h1>
+        <p class="text-lg text-gray-500 mt-2">Gestisci tutti i tuoi quiz e genera un codice unico per la tua pagina.</p>
+    </header>
+
+    <!-- Vista Lista Quiz -->
+    <div id="quiz-list-view">
+        <div class="max-w-4xl mx-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-700">I tuoi Quiz</h2>
+                <button id="add-new-quiz-btn" class="btn btn-primary">+ Crea Nuovo Quiz</button>
+            </div>
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div id="quiz-list-container" class="space-y-4">
+                    <!-- La lista dei quiz apparirà qui -->
+                </div>
+                <div id="no-quiz-message" class="text-center text-gray-500 py-8 hidden">
+                    <p>Non hai ancora creato nessun quiz.</p>
+                    <p>Clicca su "Crea Nuovo Quiz" per iniziare!</p>
+                </div>
+            </div>
+
+            <div class="mt-8 bg-white rounded-xl shadow-md p-6">
+                <h3 class="text-xl font-bold text-gray-700 mb-4">Generatore Codice Universale (Esporta)</h3>
+                <p class="text-gray-600 mb-4">Genera il codice unico da incollare sulla tua pagina. **Questo codice contiene anche il backup di tutti i tuoi quiz.**</p>
+                <button id="generate-universal-code-btn" class="w-full btn btn-success text-lg">
+                    Genera Codice Universale
+                </button>
+            </div>
+
+             <div class="mt-8 bg-white rounded-xl shadow-md p-6">
+                <h3 class="text-xl font-bold text-gray-700 mb-4">Recupera Quiz da Codice (Importa)</h3>
+                <p class="text-gray-600 mb-4">Hai salvato un codice universale? Incollalo qui per recuperare tutti i quiz che conteneva.</p>
+                <textarea id="import-code-area" class="w-full p-2" placeholder="Incolla qui il tuo Codice Universale..."></textarea>
+                <button id="import-code-btn" class="w-full btn btn-warning text-lg mt-4">
+                    Importa Quiz
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vista Editor Quiz -->
+    <div id="quiz-editor-view">
+         <div class="tool-container">
+            <!-- Pannello di Configurazione -->
+            <div class="panel scrollable-panel">
+                <button id="back-to-list-btn" class="self-start mb-4 btn btn-secondary">&larr; Torna alla lista</button>
+                <div id="config-panel">
+                    <!-- Sezione Info Quiz -->
+                    <div class="mb-6">
+                        <h2 class="text-xl font-semibold text-gray-700 mb-3">1. Informazioni Quiz</h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="quiz-title" class="block text-sm font-medium text-gray-700 mb-1">Titolo Quiz (apparirà nell'header)</label>
+                                <input type="text" id="quiz-title" placeholder="Es. Quiz di Natale" class="w-full p-2 border border-gray-300 rounded-md">
+                            </div>
+                             <div>
+                                <label for="quiz-referrer" class="block text-sm font-medium text-gray-700 mb-1">Referrer ID</label>
+                                <input type="text" id="quiz-referrer" placeholder="Es. natale2024" class="w-full p-2 border border-gray-300 rounded-md">
+                            </div>
+                             <div>
+                                <label for="quiz-topic" class="block text-sm font-medium text-gray-700 mb-1">Argomento Principale del Quiz (per AI)</label>
+                                <input type="text" id="quiz-topic" placeholder="Es. La storia dell'arte del Rinascimento" class="w-full p-2 border border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label for="quiz-intro-text" class="block text-sm font-medium text-gray-700 mb-1">Testo Introduttivo (opzionale)</label>
+                                <textarea id="quiz-intro-text" placeholder="Scrivi un testo di benvenuto per il tuo quiz..." class="w-full p-2 border border-gray-300 rounded-md" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Sezione Colori -->
+                    <div class="mb-6">
+                        <h2 class="text-xl font-semibold text-gray-700 mb-3">2. Colore Pulsanti CTA</h2>
+                        <div id="color-selector" class="flex flex-wrap gap-3 items-center"></div>
+                    </div>
+                    <!-- Sezione Domande -->
+                    <div class="mb-6">
+                        <h2 class="text-xl font-semibold text-gray-700 mb-4">3. Domande</h2>
+                        <div id="questions-container"></div>
+                        <button id="add-question-btn" class="mt-4 w-full py-2 px-4 rounded-lg font-semibold transition-colors duration-200 btn-secondary">
+                            + Aggiungi Domanda
+                        </button>
+                    </div>
+                    <!-- Sezione Risultati -->
+                    <div class="mb-6">
+                        <h2 class="text-xl font-semibold text-gray-700 mb-3">4. Risultati in base al punteggio</h2>
+                        <div class="space-y-2 mb-4 p-3 bg-gray-50 rounded-lg">
+                            <label class="block text-sm font-medium text-gray-700">Soglie (% di risposte corrette):</label>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label for="quiz-high-score" class="text-xs text-gray-600">Punteggio Alto (>= %)</label>
+                                    <input type="number" id="quiz-high-score" value="80" class="w-full p-2 border border-gray-300 rounded-md">
+                                </div>
+                                <div>
+                                    <label for="quiz-medium-score" class="text-xs text-gray-600">Punteggio Medio (>= %)</label>
+                                    <input type="number" id="quiz-medium-score" value="40" class="w-full p-2 border border-gray-300 rounded-md">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="p-4 border rounded-lg bg-green-50 mb-4">
+                            <p class="font-semibold text-green-800">Se il punteggio è ALTO</p>
+                            <div class="flex items-center space-x-2 mt-2">
+                                <input type="text" id="quiz-high-title" placeholder="Titolo per punteggio alto" class="w-full p-2 border rounded-md">
+                                <button class="gemini-btn p-2 rounded-md bg-purple-100 text-purple-600 hover:bg-purple-200" data-target="quiz-high-title" data-type="titolo" data-level="alto"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3C12 3 6.662 8.62 6.662 13.31C6.662 18 12 21 12 21M12 3C12 3 17.338 8.62 17.338 13.31C17.338 18 12 21 12 21"/><path d="M12 3V21"/><path d="M21 13.31C21 8.62 15.662 3 15.662 3"/><path d="M3 13.31C3 8.62 8.338 3 8.338 3"/><path d="M12 21C16.625 21 21 17.625 21 13"/><path d="M12 21C7.375 21 3 17.625 3 13"/></svg></button>
+                            </div>
+                            <div class="flex items-center space-x-2 mt-2">
+                                <textarea id="quiz-high-message" placeholder="Messaggio per punteggio alto" class="w-full p-2 border rounded-md" rows="2"></textarea>
+                                <button class="gemini-btn p-2 rounded-md bg-purple-100 text-purple-600 hover:bg-purple-200" data-target="quiz-high-message" data-type="messaggio" data-level="alto"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3C12 3 6.662 8.62 6.662 13.31C6.662 18 12 21 12 21M12 3C12 3 17.338 8.62 17.338 13.31C17.338 18 12 21 12 21"/><path d="M12 3V21"/><path d="M21 13.31C21 8.62 15.662 3 15.662 3"/><path d="M3 13.31C3 8.62 8.338 3 8.338 3"/><path d="M12 21C16.625 21 21 17.625 21 13"/><path d="M12 21C7.375 21 3 17.625 3 13"/></svg></button>
+                            </div>
+                            <input type="text" id="quiz-high-cta-text" placeholder="Testo CTA" class="w-full p-2 mt-2 border rounded-md">
+                            <input type="text" id="quiz-high-cta-link" placeholder="Link CTA" class="w-full p-2 mt-2 border rounded-md">
+                        </div>
+
+                        <div class="p-4 border rounded-lg bg-yellow-50 mb-4">
+                            <p class="font-semibold text-yellow-800">Se il punteggio è MEDIO</p>
+                            <div class="flex items-center space-x-2 mt-2">
+                                <input type="text" id="quiz-medium-title" placeholder="Titolo per punteggio medio" class="w-full p-2 border rounded-md">
+                                <button class="gemini-btn p-2 rounded-md bg-purple-100 text-purple-600 hover:bg-purple-200" data-target="quiz-medium-title" data-type="titolo" data-level="medio"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3C12 3 6.662 8.62 6.662 13.31C6.662 18 12 21 12 21M12 3C12 3 17.338 8.62 17.338 13.31C17.338 18 12 21 12 21"/><path d="M12 3V21"/><path d="M21 13.31C21 8.62 15.662 3 15.662 3"/><path d="M3 13.31C3 8.62 8.338 3 8.338 3"/><path d="M12 21C16.625 21 21 17.625 21 13"/><path d="M12 21C7.375 21 3 17.625 3 13"/></svg></button>
+                            </div>
+                            <div class="flex items-center space-x-2 mt-2">
+                                <textarea id="quiz-medium-message" placeholder="Messaggio per punteggio medio" class="w-full p-2 border rounded-md" rows="2"></textarea>
+                                <button class="gemini-btn p-2 rounded-md bg-purple-100 text-purple-600 hover:bg-purple-200" data-target="quiz-medium-message" data-type="messaggio" data-level="medio"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3C12 3 6.662 8.62 6.662 13.31C6.662 18 12 21 12 21M12 3C12 3 17.338 8.62 17.338 13.31C17.338 18 12 21 12 21"/><path d="M12 3V21"/><path d="M21 13.31C21 8.62 15.662 3 15.662 3"/><path d="M3 13.31C3 8.62 8.338 3 8.338 3"/><path d="M12 21C16.625 21 21 17.625 21 13"/><path d="M12 21C7.375 21 3 17.625 3 13"/></svg></button>
+                            </div>
+                            <input type="text" id="quiz-medium-cta-text" placeholder="Testo CTA" class="w-full p-2 mt-2 border rounded-md">
+                            <input type="text" id="quiz-medium-cta-link" placeholder="Link CTA" class="w-full p-2 mt-2 border rounded-md">
+                        </div>
+
+                        <div class="p-4 border rounded-lg bg-red-50">
+                            <p class="font-semibold text-red-800">Se il punteggio è BASSO</p>
+                            <div class="flex items-center space-x-2 mt-2">
+                                <input type="text" id="quiz-low-title" placeholder="Titolo per punteggio basso" class="w-full p-2 border rounded-md">
+                                <button class="gemini-btn p-2 rounded-md bg-purple-100 text-purple-600 hover:bg-purple-200" data-target="quiz-low-title" data-type="titolo" data-level="basso"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3C12 3 6.662 8.62 6.662 13.31C6.662 18 12 21 12 21M12 3C12 3 17.338 8.62 17.338 13.31C17.338 18 12 21 12 21"/><path d="M12 3V21"/><path d="M21 13.31C21 8.62 15.662 3 15.662 3"/><path d="M3 13.31C3 8.62 8.338 3 8.338 3"/><path d="M12 21C16.625 21 21 17.625 21 13"/><path d="M12 21C7.375 21 3 17.625 3 13"/></svg></button>
+                            </div>
+                            <div class="flex items-center space-x-2 mt-2">
+                                <textarea id="quiz-low-message" placeholder="Messaggio per punteggio basso" class="w-full p-2 border rounded-md" rows="2"></textarea>
+                                <button class="gemini-btn p-2 rounded-md bg-purple-100 text-purple-600 hover:bg-purple-200" data-target="quiz-low-message" data-type="messaggio" data-level="basso"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3C12 3 6.662 8.62 6.662 13.31C6.662 18 12 21 12 21M12 3C12 3 17.338 8.62 17.338 13.31C17.338 18 12 21 12 21"/><path d="M12 3V21"/><path d="M21 13.31C21 8.62 15.662 3 15.662 3"/><path d="M3 13.31C3 8.62 8.338 3 8.338 3"/><path d="M12 21C16.625 21 21 17.625 21 13"/><path d="M12 21C7.375 21 3 17.625 3 13"/></svg></button>
+                            </div>
+                            <input type="text" id="quiz-low-cta-text" placeholder="Testo CTA" class="w-full p-2 mt-2 border rounded-md">
+                            <input type="text" id="quiz-low-cta-link" placeholder="Link CTA" class="w-full p-2 mt-2 border rounded-md">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Pannello Azioni -->
+            <div class="panel">
+                <div class="flex flex-col h-full">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold text-gray-700">5. Anteprima e Salvataggio</h2>
+                        <button id="generate-preview-btn" class="btn btn-primary">
+                            Testa il Quiz
+                        </button>
+                    </div>
+                    <div class="border rounded-lg overflow-hidden flex-grow mb-4 bg-gray-50">
+                        <iframe id="preview-frame" class="w-full h-full min-h-[400px]"></iframe>
+                    </div>
+                    <div class="border-t pt-4 mt-auto">
+                        <button id="save-quiz-btn" class="w-full text-white font-bold py-3 px-8 rounded-full transition-all duration-300 shadow-md btn-success text-lg">
+                            Salva e Torna alla Lista
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modale per Codice HTML -->
+    <div id="code-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                 <h2 id="modal-title" class="text-2xl font-bold text-gray-800">Codice Generato</h2>
+                 <button id="close-modal-btn" class="text-2xl font-bold text-gray-500 hover:text-gray-800">&times;</button>
+            </div>
+            <textarea id="code-output" class="w-full p-2" readonly></textarea>
+            <div class="mt-4 text-right">
+                 <button id="copy-code-btn" class="btn btn-primary">Copia Codice</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // *** INIZIO TEMPLATE QUIZ UNIVERSALE AGGIORNATO ***
+        const universalQuizTemplate = `<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz</title>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; }
+        .quiz-body { font-family: 'Inter', sans-serif; }
+        .quiz-container, .results-container { transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out; }
+        .question-fade-out { opacity: 0; transform: translateY(-20px); }
+        .question-fade-in { opacity: 1; transform: translateY(0); }
+        .answer-btn.correct { background-color: #34C759; color: white; border-color: #34C759; }
+        .answer-btn.incorrect { background-color: #FF3B30; color: white; border-color: #FF3B30; }
+        .answer-btn:disabled { cursor: not-allowed; }
+        .btn-gradient { border: none; }
+        .btn-gradient:hover { opacity: 0.9; }
+        .gradient-text {
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+        /* Fix per Instapage: assicura che il link CTA sia cliccabile */
+        #result-link {
+            position: relative;
+            z-index: 9999;
+        }
+    <\/style>
+</head>
+<body class="bg-gray-50">
+    <div id="quiz-app-container" class="quiz-body w-full max-w-2xl mx-auto p-4 sm:p-6 md:p-8">
+        <!-- L'intera app del quiz verrà iniettata qui -->
+    </div>
+    
+    <script id="quiz-data-container" type="application/json">
+        {{QUIZ_LIBRARY}}
+    <\/script>
+
+    <script>
+        function getQuizFromURL() {
+            const dataEl = document.getElementById('quiz-data-container');
+            const quizLibrary = JSON.parse(dataEl.textContent);
+            const params = new URLSearchParams(window.location.search);
+            const referrer = params.get('referrer');
+            if (referrer && quizLibrary[referrer]) {
+                return quizLibrary[referrer];
+            }
+            const keys = Object.keys(quizLibrary);
+            if (keys.length > 0 && !referrer) {
+                return quizLibrary[keys[0]];
+            }
+            return null;
+        }
+
+        function buildAndRunQuiz(quizConfig) {
+            const appContainer = document.getElementById('quiz-app-container');
+            if (!quizConfig) {
+                appContainer.innerHTML = '<div class="text-center text-gray-600 p-8 bg-white rounded-lg shadow-md"><h2>Quiz non trovato.</h2><p>Assicurati che l\\'URL contenga un parametro <code class="bg-gray-200 text-sm p-1 rounded">?referrer=ID</code> valido.</p></div>';
+                return;
+            }
+            
+            let headerHtml = '';
+            if (quizConfig.title && quizConfig.title.trim() !== '') {
+                headerHtml = \`
+                <header class="flex items-center justify-center space-x-4 p-4 mb-6 bg-white rounded-2xl shadow-lg">
+                    <img src="https://vivienergia.imgix.net/uploads/2025/07/31123021/VIVIenergia_bandiera_CMYK-1.png" alt="Logo VIVIenergia" class="h-8 sm:h-10">
+                    <span class="gradient-text text-xl sm:text-2xl font-bold" style="background-image: linear-gradient(to right, \${quizConfig.color.start}, \${quizConfig.color.end});">\${quizConfig.title}</span>
+                </header>
+                \`;
+            }
+
+            const quizHtml = \`
+                <main id="quiz-container" class="quiz-container bg-white p-6 md:p-8 rounded-2xl shadow-lg">
+                    <div id="intro-container" class="text-center"></div>
+                    <div id="question-area" class="hidden">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 id="question-counter" class="text-sm font-semibold text-gray-500"></h2>
+                            <div id="score-display" class="text-sm font-bold text-gray-700">Punteggio: 0</div>
+                        </div>
+                        <p id="question-text" class="text-xl md:text-2xl font-semibold text-gray-900 mb-6 min-h-[80px]"></p>
+                        <div id="answer-buttons" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                        <div class="mt-8 text-center">
+                            <button id="next-btn" class="btn-gradient text-white font-bold py-3 px-8 rounded-full transition-all duration-300 shadow-md hidden" style="background-image: linear-gradient(to right, \${quizConfig.color.start}, \${quizConfig.color.end})">Prossima Domanda</button>
+                        </div>
+                    </div>
+                </main>
+
+                <div id="results-container" class="results-container bg-white p-6 md:p-8 rounded-2xl shadow-lg hidden opacity-0 text-center">
+                    <h2 id="result-title" class="text-2xl md:text-3xl font-bold text-gray-800 mb-2"></h2>
+                    <p id="result-message" class="text-gray-600 mb-4"></p>
+                    <div class="bg-blue-100 text-blue-800 text-xl md:text-2xl font-bold py-4 px-6 rounded-xl mb-6 inline-block">
+                        Punteggio Finale: <span id="final-score"></span>
+                    </div>
+                    <!-- Modifica: aggiunto evento onclick per Instapage -->
+                    <a id="result-link" href="#" target="_blank" onclick="window.open(this.href, '_blank'); return false;" class="btn-gradient inline-block text-white font-bold py-3 px-8 rounded-full shadow-md mt-6 mb-8" style="background-image: linear-gradient(to right, \${quizConfig.color.start}, \${quizConfig.color.end})"></a>
+                    <div class="my-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">Riepilogo Risposte</h3>
+                        <div id="summary-container" class="text-left space-y-3"></div>
+                    </div>
+                    <button id="restart-btn" class="block mx-auto mt-6 text-blue-500 hover:underline">Riprova il Quiz</button>
+                </div>
+            \`;
+            
+            // Modifica: blocco footer aggiornato con i link social corretti e testo di copyright
+            const footerHtml = \`
+                <footer class="text-white rounded-2xl shadow-lg mt-8 p-6 text-center" style="background-image: linear-gradient(to right, \${quizConfig.color.start}, \${quizConfig.color.end});">
+                    <img src="https://vivienergia.imgix.net/uploads/2025/07/31123019/VIVIenergia_bandiera_CMYK_Bianco-1.png" alt="Logo VIVIenergia Bianco" class="h-12 mx-auto mb-6">
+                    <div class="flex justify-center space-x-6 mb-4">
+                        <a href="https://www.facebook.com/VIVIenergia/?locale=it_IT" target="_blank" class="hover:opacity-80" aria-label="Facebook"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.494v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z"/></svg></a>
+                        <a href="https://www.instagram.com/vivi_energia/" target="_blank" class="hover:opacity-80" aria-label="Instagram"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.85s-.011 3.584-.069 4.85c-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07s-3.584-.012-4.85-.07c-3.252-.148-4.771-1.691-4.919-4.919-.058-1.265-.069-1.645-.069-4.85s.011-3.584.069-4.85c.149-3.225 1.664-4.771 4.919-4.919 1.266-.058 1.644-.07 4.85-.07zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948s.014 3.667.072 4.947c.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072s3.667-.014 4.947-.072c4.358-.2 6.78-2.618 6.98-6.98.059-1.281.073-1.689.073-4.948s-.014-3.667-.072-4.947c-.2-4.358-2.618-6.78-6.98-6.98-1.281-.059-1.689-.073-4.948-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.162 6.162 6.162 6.162-2.759 6.162-6.162-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4s1.791-4 4-4 4 1.79 4 4-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44 1.441-.645 1.441-1.44-.645-1.44-1.441-1.44z"/></svg></a>
+                        <a href="https://www.linkedin.com/company/vivi-energia/" target="_blank" class="hover:opacity-80" aria-label="LinkedIn"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M4.98 3.5c0 1.381-1.11 2.5-2.48 2.5s-2.48-1.119-2.48-2.5c0-1.38 1.11-2.5 2.48-2.5s2.48 1.12 2.48 2.5zm.02 4.5h-5v16h5v-16zm7.982 0h-4.968v16h4.969v-8.399c0-4.67 6.029-5.052 6.029 0v8.399h4.988v-10.131c0-7.88-8.922-7.593-11.018-3.714v-2.155z"/></svg></a>
+                        <a href="https://www.youtube.com/channel/UCtJHNoeWukENnTQC2NHGbEw" target="_blank" class="hover:opacity-80" aria-label="YouTube"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg></a>
+                    </div>
+                    <p class="text-xs text-gray-200 leading-relaxed">
+                    © Copyright 2004-2025 VIVIGAS S.p.A. - Privacy policy - Cookie policy - Informazioni legali - Richiesta Informazioni - Invio Reclamo Vivigas S.p.A. - Società a Socio Unico - Sede: Roncadelle (BS), 25030 - Via Vittorio Emanuele II, 4/28 - P.IVA 13149000153 Iscrizione Ufficio Imprese (Brescia) n. 13149000153 - REA (Brescia): 439186 - Capitale versato, esistente dall'ultimo bilancio: € 9.533.414 i.v.
+                    </p>
+                </footer>
+            \`;
+            
+            appContainer.innerHTML = headerHtml + quizHtml + footerHtml;
+            
+            const quizData = quizConfig.questions;
+            const quizContainer = document.getElementById('quiz-container');
+            const resultsContainer = document.getElementById('results-container');
+            const introContainer = document.getElementById('intro-container');
+            const questionArea = document.getElementById('question-area');
+            const questionCounterEl = document.getElementById('question-counter');
+            const scoreDisplayEl = document.getElementById('score-display');
+            const questionTextEl = document.getElementById('question-text');
+            const answerButtonsEl = document.getElementById('answer-buttons');
+            const nextBtn = document.getElementById('next-btn');
+            const restartBtn = document.getElementById('restart-btn');
+            let currentQuestionIndex = 0;
+            let score = 0;
+            let userAnswers = [];
+
+            function initializeQuiz() {
+                const introTitle = (quizConfig.introText && quizConfig.introText.trim() !== '') ? quizConfig.title : '';
+                if (quizConfig.introText && quizConfig.introText.trim() !== '') {
+                    introContainer.innerHTML = \`
+                        <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4">\${introTitle}</h2>
+                        <p class="text-gray-600 mb-8 whitespace-pre-wrap">\${quizConfig.introText}</p>
+                        <button id="start-btn" class="btn-gradient text-white font-bold py-3 px-8 rounded-full transition-all duration-300 shadow-md w-full" style="background-image: linear-gradient(to right, \${quizConfig.color.start}, \${quizConfig.color.end})">Inizia il Quiz</button>
+                    \`;
+                    document.getElementById('start-btn').addEventListener('click', startQuestions);
+                    introContainer.classList.remove('hidden');
+                    questionArea.classList.add('hidden');
+                    resultsContainer.classList.add('hidden', 'opacity-0');
+                    quizContainer.classList.remove('hidden', 'opacity-0');
+                } else {
+                    introContainer.classList.add('hidden');
+                    startQuestions();
+                }
+            }
+
+            function startQuestions() {
+                currentQuestionIndex = 0;
+                score = 0;
+                userAnswers = [];
+                introContainer.classList.add('hidden');
+                questionArea.classList.remove('hidden');
+                resultsContainer.classList.add('hidden', 'opacity-0');
+                quizContainer.classList.remove('hidden', 'opacity-0');
+                nextBtn.classList.add('hidden');
+                updateScoreDisplay();
+                showQuestion();
+            }
+
+            function showQuestion() {
+                while (answerButtonsEl.firstChild) { answerButtonsEl.removeChild(answerButtonsEl.firstChild); }
+                nextBtn.classList.add('hidden');
+                const currentQuestion = quizData[currentQuestionIndex];
+                questionCounterEl.innerText = \`Domanda \${currentQuestionIndex + 1} / \${quizData.length}\`;
+                questionTextEl.innerText = currentQuestion.question;
+
+                currentQuestion.answers.forEach(answer => {
+                    const button = document.createElement('button');
+                    button.innerText = answer.text;
+                    button.classList.add('answer-btn', 'w-full', 'text-left', 'p-4', 'rounded-xl', 'border-2', 'border-gray-200', 'hover:bg-gray-100', 'hover:border-blue-500', 'transition-all', 'duration-200', 'font-medium');
+                    button.dataset.correct = answer.correct;
+                    button.addEventListener('click', selectAnswer);
+                    answerButtonsEl.appendChild(button);
+                });
+                
+                questionArea.classList.remove('question-fade-out');
+                questionArea.classList.add('question-fade-in');
+            }
+
+            function selectAnswer(e) {
+                const selectedBtn = e.target;
+                const isCorrect = selectedBtn.dataset.correct === 'true';
+                userAnswers.push({ question: quizData[currentQuestionIndex].question, selected: selectedBtn.innerText, correct: quizData[currentQuestionIndex].answers.find(a => a.correct).text, isCorrect: isCorrect });
+                if (isCorrect) { score++; selectedBtn.classList.add('correct'); } else { selectedBtn.classList.add('incorrect'); }
+                updateScoreDisplay();
+                Array.from(answerButtonsEl.children).forEach(button => { if (button.dataset.correct === 'true') { button.classList.add('correct'); } button.disabled = true; });
+                if (quizData.length > currentQuestionIndex + 1) { nextBtn.innerText = "Prossima Domanda"; } else { nextBtn.innerText = "Vedi Risultati"; }
+                nextBtn.classList.remove('hidden');
+            }
+            
+            function updateScoreDisplay() { scoreDisplayEl.innerText = \`Punteggio: \${score}\`; }
+
+            function showResults() {
+                quizContainer.classList.add('hidden');
+                resultsContainer.classList.remove('hidden');
+                setTimeout(() => resultsContainer.classList.remove('opacity-0'), 50);
+
+                const finalScoreEl = document.getElementById('final-score');
+                const resultTitleEl = document.getElementById('result-title');
+                const resultMessageEl = document.getElementById('result-message');
+                const resultLinkEl = document.getElementById('result-link');
+                const summaryContainer = document.getElementById('summary-container');
+                summaryContainer.innerHTML = '';
+
+                userAnswers.forEach((answer, index) => {
+                    const summaryItem = document.createElement('div');
+                    summaryItem.classList.add('p-3', 'rounded-lg');
+                    const icon = answer.isCorrect 
+                        ? \`<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-2 inline-block" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>\`
+                        : \`<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500 mr-2 inline-block" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>\`;
+                    let answerHtml = \`<div class="flex items-start"><span class="mr-2">\${icon}</span><div><p class="font-semibold">\${index + 1}. \${answer.question}</p>\`;
+                    if (answer.isCorrect) { summaryItem.classList.add('bg-green-50'); answerHtml += \`<p class="text-sm text-gray-700">La tua risposta: \${answer.selected}</p>\`; } else { summaryItem.classList.add('bg-red-50'); answerHtml += \`<p class="text-sm text-red-700">La tua risposta: \${answer.selected}</p><p class="text-sm text-green-700">Risposta corretta: \${answer.correct}</p>\`; }
+                    answerHtml += '</div></div>';
+                    summaryItem.innerHTML = answerHtml;
+                    summaryContainer.appendChild(summaryItem);
+                });
+
+                finalScoreEl.innerText = \`\${score} / \${quizData.length}\`;
+                const scorePercentage = (quizData.length > 0) ? (score / quizData.length) * 100 : 0;
+                let resultConfig;
+                if (scorePercentage >= quizConfig.highScoreThreshold) { resultConfig = quizConfig.results.high; } else if (scorePercentage >= quizConfig.mediumScoreThreshold) { resultConfig = quizConfig.results.medium; } else { resultConfig = quizConfig.results.low; }
+                resultTitleEl.innerText = resultConfig.title;
+                resultMessageEl.innerText = resultConfig.message;
+                resultLinkEl.href = resultConfig.ctaLink;
+                resultLinkEl.innerText = resultConfig.ctaText;
+            }
+
+            function handleNextButton() {
+                currentQuestionIndex++;
+                questionArea.classList.add('question-fade-out');
+                questionArea.classList.remove('question-fade-in');
+                setTimeout(() => { showQuestion(); }, 300);
+            }
+
+            nextBtn.addEventListener('click', () => { if (quizData.length > currentQuestionIndex + 1) { handleNextButton(); } else { showResults(); } });
+            restartBtn.addEventListener('click', initializeQuiz);
+            initializeQuiz();
+        }
+
+        const activeQuiz = getQuizFromURL();
+        buildAndRunQuiz(activeQuiz);
+    <\/script>
+</body>
+</html>`;
+        
+        const previewTemplate = `
+            <!DOCTYPE html>
+            <html lang="it">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Anteprima Quiz</title>
+                <script src="https://cdn.tailwindcss.com"><\/script>
+                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+                <style>
+                    body { margin: 0; }
+                    .quiz-body { font-family: 'Inter', sans-serif; }
+                    .quiz-container, .results-container { transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out; }
+                    .question-fade-out { opacity: 0; transform: translateY(-20px); }
+                    .question-fade-in { opacity: 1; transform: translateY(0); }
+                    .answer-btn.correct { background-color: #34C759; color: white; border-color: #34C759; }
+                    .answer-btn.incorrect { background-color: #FF3B30; color: white; border-color: #FF3B30; }
+                    .answer-btn:disabled { cursor: not-allowed; }
+                    .btn-gradient { border: none; }
+                    .btn-gradient:hover { opacity: 0.9; }
+                    .gradient-text {
+                        background-clip: text;
+                        -webkit-background-clip: text;
+                        color: transparent;
+                    }
+                    /* Fix per Instapage: assicura che il link CTA sia cliccabile */
+                    #result-link {
+                        position: relative;
+                        z-index: 9999;
+                    }
+                <\/style>
+            </head>
+            <body class="bg-gray-50">
+                <div id="quiz-app-container" class="quiz-body w-full max-w-2xl mx-auto p-4 sm:p-6 md:p-8">
+                    <!-- L'intera app del quiz verrà iniettata qui -->
+                </div>
+                <script>
+                    function buildAndRunQuiz(quizConfig) {
+                        const appContainer = document.getElementById('quiz-app-container');
+                        if (!quizConfig) {
+                            appContainer.innerHTML = '<div class="text-center text-gray-600 p-8"><h2>Caricamento anteprima...</h2></div>';
+                            return;
+                        }
+                        
+                        let headerHtml = '';
+                        if (quizConfig.title && quizConfig.title.trim() !== '') {
+                            headerHtml = \`
+                            <header class="flex items-center justify-center space-x-4 p-4 mb-6 bg-white rounded-2xl shadow-lg">
+                                <img src="https://vivienergia.imgix.net/uploads/2025/07/31123021/VIVIenergia_bandiera_CMYK-1.png" alt="Logo VIVIenergia" class="h-8 sm:h-10">
+                                <span class="gradient-text text-xl sm:text-2xl font-bold" style="background-image: linear-gradient(to right, \${quizConfig.color.start}, \${quizConfig.color.end});">\${quizConfig.title}</span>
+                            </header>
+                            \`;
+                        }
+
+                        const quizHtml = \`
+                            <main id="quiz-container" class="quiz-container bg-white p-6 md:p-8 rounded-2xl shadow-lg">
+                                <div id="intro-container" class="text-center"></div>
+                                <div id="question-area" class="hidden">
+                                    <div class="flex justify-between items-center mb-4">
+                                        <h2 id="question-counter" class="text-sm font-semibold text-gray-500"></h2>
+                                        <div id="score-display" class="text-sm font-bold text-gray-700">Punteggio: 0</div>
+                                    </div>
+                                    <p id="question-text" class="text-xl md:text-2xl font-semibold text-gray-900 mb-6 min-h-[80px]"></p>
+                                    <div id="answer-buttons" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                                    <div class="mt-8 text-center">
+                                        <button id="next-btn" class="btn-gradient text-white font-bold py-3 px-8 rounded-full transition-all duration-300 shadow-md hidden" style="background-image: linear-gradient(to right, \${quizConfig.color.start}, \${quizConfig.color.end})">Prossima Domanda</button>
+                                    </div>
+                                </div>
+                            </main>
+                            <div id="results-container" class="results-container bg-white p-6 md:p-8 rounded-2xl shadow-lg hidden opacity-0 text-center">
+                                <h2 id="result-title" class="text-2xl md:text-3xl font-bold text-gray-800 mb-2"></h2>
+                                <p id="result-message" class="text-gray-600 mb-4"></p>
+                                <div class="bg-blue-100 text-blue-800 text-xl md:text-2xl font-bold py-4 px-6 rounded-xl mb-6 inline-block">
+                                    Punteggio Finale: <span id="final-score"></span>
+                                </div>
+                                <!-- Modifica: aggiunto evento onclick per Instapage -->
+                                <a id="result-link" href="#" target="_blank" onclick="window.open(this.href, '_blank'); return false;" class="btn-gradient inline-block text-white font-bold py-3 px-8 rounded-full shadow-md mt-6 mb-8" style="background-image: linear-gradient(to right, \${quizConfig.color.start}, \${quizConfig.color.end})"></a>
+                                <div class="my-6">
+                                    <h3 class="text-xl font-bold text-gray-800 mb-4">Riepilogo Risposte</h3>
+                                    <div id="summary-container" class="text-left space-y-3"></div>
+                                </div>
+                                <button id="restart-btn" class="block mx-auto mt-6 text-blue-500 hover:underline">Riprova il Quiz</button>
+                            </div>
+                        \`;
+
+                         // Modifica: blocco footer aggiornato con i link social corretti e testo di copyright
+                         const footerHtml = \`
+                            <footer class="text-white rounded-2xl shadow-lg mt-8 p-6 text-center" style="background-image: linear-gradient(to right, \${quizConfig.color.start}, \${quizConfig.color.end});">
+                                <img src="https://vivienergia.imgix.net/uploads/2025/07/31123019/VIVIenergia_bandiera_CMYK_Bianco-1.png" alt="Logo VIVIenergia Bianco" class="h-12 mx-auto mb-6">
+                                <div class="flex justify-center space-x-6 mb-4">
+                                    <a href="https://www.facebook.com/VIVIenergia/?locale=it_IT" target="_blank" class="hover:opacity-80" aria-label="Facebook"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.494v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z"/></svg></a>
+                                    <a href="https://www.instagram.com/vivi_energia/" target="_blank" class="hover:opacity-80" aria-label="Instagram"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.85s-.011 3.584-.069 4.85c-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07s-3.584-.012-4.85-.07c-3.252-.148-4.771-1.691-4.919-4.919-.058-1.265-.069-1.645-.069-4.85s.011-3.584.069-4.85c.149-3.225 1.664-4.771 4.919-4.919 1.266-.058 1.644-.07 4.85-.07zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948s.014 3.667.072 4.947c.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072s3.667-.014 4.947-.072c4.358-.2 6.78-2.618 6.98-6.98.059-1.281.073-1.689.073-4.948s-.014-3.667-.072-4.947c-.2-4.358-2.618-6.78-6.98-6.98-1.281-.059-1.689-.073-4.948-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.162 6.162 6.162 6.162-2.759 6.162-6.162-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4s1.791-4 4-4 4 1.79 4 4-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44 1.441-.645 1.441-1.44-.645-1.44-1.441-1.44z"/></svg></a>
+                                    <a href="https://www.linkedin.com/company/vivi-energia/" target="_blank" class="hover:opacity-80" aria-label="LinkedIn"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M4.98 3.5c0 1.381-1.11 2.5-2.48 2.5s-2.48-1.119-2.48-2.5c0-1.38 1.11-2.5 2.48-2.5s2.48 1.12 2.48 2.5zm.02 4.5h-5v16h5v-16zm7.982 0h-4.968v16h4.969v-8.399c0-4.67 6.029-5.052 6.029 0v8.399h4.988v-10.131c0-7.88-8.922-7.593-11.018-3.714v-2.155z"/></svg></a>
+                                    <a href="https://www.youtube.com/channel/UCtJHNoeWukENnTQC2NHGbEw" target="_blank" class="hover:opacity-80" aria-label="YouTube"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg></a>
+                                </div>
+                                <p class="text-xs text-gray-200 leading-relaxed">
+                                © Copyright 2004-2025 VIVIGAS S.p.A. - Privacy policy - Cookie policy - Informazioni legali - Richiesta Informazioni - Invio Reclamo Vivigas S.p.A. - Società a Socio Unico - Sede: Roncadelle (BS), 25030 - Via Vittorio Emanuele II, 4/28 - P.IVA 13149000153 Iscrizione Ufficio Imprese (Brescia) n. 13149000153 - REA (Brescia): 439186 - Capitale versato, esistente dall'ultimo bilancio: € 9.533.414 i.v.
+                                </p>
+                            </footer>
+                        \`;
+
+                        appContainer.innerHTML = headerHtml + quizHtml + footerHtml;
+
+                        const quizData = quizConfig.questions;
+                        const quizContainer = document.getElementById('quiz-container');
+                        const resultsContainer = document.getElementById('results-container');
+                        const introContainer = document.getElementById('intro-container');
+                        const questionArea = document.getElementById('question-area');
+                        const questionCounterEl = document.getElementById('question-counter');
+                        const scoreDisplayEl = document.getElementById('score-display');
+                        const questionTextEl = document.getElementById('question-text');
+                        const answerButtonsEl = document.getElementById('answer-buttons');
+                        const nextBtn = document.getElementById('next-btn');
+                        const restartBtn = document.getElementById('restart-btn');
+                        let currentQuestionIndex = 0;
+                        let score = 0;
+                        let userAnswers = [];
+
+                        function initializeQuiz() {
+                            const introTitle = (quizConfig.introText && quizConfig.introText.trim() !== '') ? quizConfig.title : '';
+                            if (quizConfig.introText && quizConfig.introText.trim() !== '') {
+                                introContainer.innerHTML = \`
+                                    <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4">\${introTitle}</h2>
+                                    <p class="text-gray-600 mb-8 whitespace-pre-wrap">\${quizConfig.introText}</p>
+                                    <button id="start-btn" class="btn-gradient text-white font-bold py-3 px-8 rounded-full transition-all duration-300 shadow-md w-full" style="background-image: linear-gradient(to right, \${quizConfig.color.start}, \${quizConfig.color.end})">Inizia il Quiz</button>
+                                \`;
+                                document.getElementById('start-btn').addEventListener('click', startQuestions);
+                                introContainer.classList.remove('hidden');
+                                questionArea.classList.add('hidden');
+                                resultsContainer.classList.add('hidden', 'opacity-0');
+                                quizContainer.classList.remove('hidden', 'opacity-0');
+                            } else {
+                                introContainer.classList.add('hidden');
+                                startQuestions();
+                            }
+                        }
+
+                        function startQuestions() {
+                            currentQuestionIndex = 0;
+                            score = 0;
+                            userAnswers = [];
+                            introContainer.classList.add('hidden');
+                            questionArea.classList.remove('hidden');
+                            resultsContainer.classList.add('hidden', 'opacity-0');
+                            quizContainer.classList.remove('hidden', 'opacity-0');
+                            nextBtn.classList.add('hidden');
+                            updateScoreDisplay();
+                            showQuestion();
+                        }
+
+                        function showQuestion() {
+                            while (answerButtonsEl.firstChild) { answerButtonsEl.removeChild(answerButtonsEl.firstChild); }
+                            nextBtn.classList.add('hidden');
+                            const currentQuestion = quizData[currentQuestionIndex];
+                            questionCounterEl.innerText = \`Domanda \${currentQuestionIndex + 1} / \${quizData.length}\`;
+                            questionTextEl.innerText = currentQuestion.question;
+                            currentQuestion.answers.forEach(answer => {
+                                const button = document.createElement('button');
+                                button.innerText = answer.text;
+                                button.classList.add('answer-btn', 'w-full', 'text-left', 'p-4', 'rounded-xl', 'border-2', 'border-gray-200', 'hover:bg-gray-100', 'hover:border-blue-500', 'transition-all', 'duration-200', 'font-medium');
+                                button.dataset.correct = answer.correct;
+                                button.addEventListener('click', selectAnswer);
+                                answerButtonsEl.appendChild(button);
+                            });
+                            questionArea.classList.remove('question-fade-out');
+                            questionArea.classList.add('question-fade-in');
+                        }
+                        function selectAnswer(e) {
+                            const selectedBtn = e.target;
+                            const isCorrect = selectedBtn.dataset.correct === 'true';
+                            userAnswers.push({ question: quizData[currentQuestionIndex].question, selected: selectedBtn.innerText, correct: quizData[currentQuestionIndex].answers.find(a => a.correct).text, isCorrect: isCorrect });
+                            if (isCorrect) { score++; selectedBtn.classList.add('correct'); } else { selectedBtn.classList.add('incorrect'); }
+                            updateScoreDisplay();
+                            Array.from(answerButtonsEl.children).forEach(button => { if (button.dataset.correct === 'true') { button.classList.add('correct'); } button.disabled = true; });
+                            if (quizData.length > currentQuestionIndex + 1) { nextBtn.innerText = "Prossima Domanda"; } else { nextBtn.innerText = "Vedi Risultati"; }
+                            nextBtn.classList.remove('hidden');
+                        }
+                        function updateScoreDisplay() { scoreDisplayEl.innerText = \`Punteggio: \${score}\`; }
+                        function showResults() {
+                            quizContainer.classList.add('hidden');
+                            resultsContainer.classList.remove('hidden');
+                            setTimeout(() => resultsContainer.classList.remove('opacity-0'), 50);
+                            const finalScoreEl = document.getElementById('final-score');
+                            const resultTitleEl = document.getElementById('result-title');
+                            const resultMessageEl = document.getElementById('result-message');
+                            const resultLinkEl = document.getElementById('result-link');
+                            const summaryContainer = document.getElementById('summary-container');
+                            summaryContainer.innerHTML = '';
+                            userAnswers.forEach((answer, index) => {
+                                const summaryItem = document.createElement('div');
+                                summaryItem.classList.add('p-3', 'rounded-lg');
+                                const icon = answer.isCorrect ? \`<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-2 inline-block" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>\` : \`<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500 mr-2 inline-block" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>\`;
+                                let answerHtml = \`<div class="flex items-start"><span class="mr-2">\${icon}</span><div><p class="font-semibold">\${index + 1}. \${answer.question}</p>\`;
+                                if (answer.isCorrect) { summaryItem.classList.add('bg-green-50'); answerHtml += \`<p class="text-sm text-gray-700">La tua risposta: \${answer.selected}</p>\`; } else { summaryItem.classList.add('bg-red-50'); answerHtml += \`<p class="text-sm text-red-700">La tua risposta: \${answer.selected}</p><p class="text-sm text-green-700">Risposta corretta: \${answer.correct}</p>\`; }
+                                answerHtml += '</div></div>';
+                                summaryItem.innerHTML = answerHtml;
+                                summaryContainer.appendChild(summaryItem);
+                            });
+                            finalScoreEl.innerText = \`\${score} / \${quizData.length}\`;
+                            const scorePercentage = (quizData.length > 0) ? (score / quizData.length) * 100 : 0;
+                            let resultConfig;
+                            if (scorePercentage >= quizConfig.highScoreThreshold) { resultConfig = quizConfig.results.high; } else if (scorePercentage >= quizConfig.mediumScoreThreshold) { resultConfig = quizConfig.results.medium; } else { resultConfig = quizConfig.results.low; }
+                            resultTitleEl.innerText = resultConfig.title;
+                            resultMessageEl.innerText = resultConfig.message;
+                            resultLinkEl.href = resultConfig.ctaLink;
+                            resultLinkEl.innerText = resultConfig.ctaText;
+                        }
+                        function handleNextButton() {
+                            currentQuestionIndex++;
+                            questionArea.classList.add('question-fade-out');
+                            questionArea.classList.remove('question-fade-in');
+                            setTimeout(() => { showQuestion(); }, 300);
+                        }
+                        nextBtn.addEventListener('click', () => { if (quizData.length > currentQuestionIndex + 1) { handleNextButton(); } else { showResults(); } });
+                        restartBtn.addEventListener('click', initializeQuiz);
+                        initializeQuiz();
+                    }
+                    window.addEventListener('message', event => {
+                        const quizConfig = event.data;
+                        if (quizConfig) {
+                            buildAndRunQuiz(quizConfig);
+                        }
+                    }, false);
+                <\/script>
+            </body>
+            </html>
+        `;
+
+        // *** FINE TEMPLATE QUIZ UNIVERSALE AGGIORNATO ***
+
+        // --- STATO DELL'APPLICAZIONE ---
+        let allQuizzes = [];
+        let currentQuiz = null;
+        const colors = [
+            { name: 'Sfumatura 1', start: '#3AA2DA', end: '#6EC18A' },
+            { name: 'Sfumatura 2', start: '#077BBE', end: '#7E2889' },
+            { name: 'Sfumatura 3', start: '#E81C69', end: '#F09724' },
+            { name: 'Sfumatura 4', start: '#F49593', end: '#F7BF28' },
+            { name: 'Sfumatura 5', start: '#0071A6', end: '#2EB8C0' },
+            { name: 'Sfumatura 6', start: '#884FE7', end: '#A0E3C9' }
+        ];
+        const defaultResults = {
+            high: { title: "Complimenti, sei un Campione della Ricerca!", message: "La tua conoscenza della nostra partnership è eccezionale. Grazie per essere al nostro fianco!", ctaText: "Sostieni la ricerca con una donazione", ctaLink: "https://dona.telethon.it/" },
+            medium: { title: "Ottimo lavoro, Sostenitore della Scienza!", message: "Conosci bene il nostro impegno. Ogni piccolo gesto ci avvicina alla cura. Continua a seguirci!", ctaText: "Approfondisci i progetti di ricerca", ctaLink: "https://www.telethon.it/cosa-facciamo/ricerca" },
+            low: { title: "Grazie per aver partecipato!", message: "Ogni domanda è un'occasione per imparare di più sul nostro impegno comune. Scopri di più sulla nostra partnership!", ctaText: "Scopri la partnership", ctaLink: "#" }
+        };
+
+        // --- DOM ELEMENTS ---
+        const listView = document.getElementById('quiz-list-view');
+        const editorView = document.getElementById('quiz-editor-view');
+        const quizListContainer = document.getElementById('quiz-list-container');
+        const noQuizMessage = document.getElementById('no-quiz-message');
+        const codeModal = document.getElementById('code-modal');
+        const colorSelector = document.getElementById('color-selector');
+
+        // --- FUNZIONI DI GESTIONE VISTE ---
+        function showListView() {
+            renderQuizList();
+            listView.style.display = 'block';
+            editorView.style.display = 'none';
+        }
+
+        function showEditorView(quiz) {
+            currentQuiz = quiz;
+            document.getElementById('quiz-title').value = quiz.title;
+            document.getElementById('quiz-referrer').value = quiz.referrer;
+            document.getElementById('quiz-intro-text').value = quiz.introText || '';
+            document.getElementById('quiz-topic').value = quiz.quizTopic || '';
+            renderColors(quiz.color);
+            renderQuestions(quiz.questions);
+            
+            document.getElementById('quiz-high-score').value = quiz.highScoreThreshold || 80;
+            document.getElementById('quiz-medium-score').value = quiz.mediumScoreThreshold || 40;
+            const results = quiz.results || defaultResults;
+            document.getElementById('quiz-high-title').value = results.high.title;
+            document.getElementById('quiz-high-message').value = results.high.message;
+            document.getElementById('quiz-high-cta-text').value = results.high.ctaText;
+            document.getElementById('quiz-high-cta-link').value = results.high.ctaLink;
+            document.getElementById('quiz-medium-title').value = results.medium.title;
+            document.getElementById('quiz-medium-message').value = results.medium.message;
+            document.getElementById('quiz-medium-cta-text').value = results.medium.ctaText;
+            document.getElementById('quiz-medium-cta-link').value = results.medium.ctaLink;
+            document.getElementById('quiz-low-title').value = results.low.title;
+            document.getElementById('quiz-low-message').value = results.low.message;
+            document.getElementById('quiz-low-cta-text').value = results.low.ctaText;
+            document.getElementById('quiz-low-cta-link').value = results.low.ctaLink;
+            
+            const previewFrame = document.getElementById('preview-frame');
+            previewFrame.srcdoc = previewTemplate;
+
+
+            listView.style.display = 'none';
+            editorView.style.display = 'block';
+            
+            // Set initial icons for gemini buttons
+            document.querySelectorAll('.gemini-btn').forEach(btn => {
+                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3C12 3 6.662 8.62 6.662 13.31C6.662 18 12 21 12 21M12 3C12 3 17.338 8.62 17.338 13.31C17.338 18 12 21 12 21"/><path d="M12 3V21"/><path d="M21 13.31C21 8.62 15.662 3 15.662 3"/><path d="M3 13.31C3 8.62 8.338 3 8.338 3"/><path d="M12 21C16.625 21 21 17.625 21 13"/><path d="M12 21C7.375 21 3 17.625 3 13"/></svg>`;
+            });
+        }
+
+        // --- FUNZIONI DI RENDERING ---
+        function renderQuizList() {
+            quizListContainer.innerHTML = '';
+            noQuizMessage.style.display = allQuizzes.length === 0 ? 'block' : 'none';
+            allQuizzes.forEach(quiz => {
+                const item = document.createElement('div');
+                item.className = 'flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50';
+                item.innerHTML = `
+                    <div>
+                        <p class="font-bold text-gray-800">${quiz.title}</p>
+                        <p class="text-sm text-gray-500">Referrer: <code class="bg-gray-200 text-xs p-1 rounded">${quiz.referrer || 'N/D'}</code></p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button class="btn btn-primary btn-sm get-code-btn" data-id="${quiz.id}">Codice</button>
+                        <button class="btn btn-secondary btn-sm edit-quiz-btn" data-id="${quiz.id}">Modifica</button>
+                        <button class="btn btn-secondary btn-sm duplicate-quiz-btn" data-id="${quiz.id}">Duplica</button>
+                        <button class="btn btn-danger btn-sm delete-quiz-btn" data-id="${quiz.id}">Elimina</button>
+                    </div>
+                `;
+                quizListContainer.appendChild(item);
+            });
+        }
+        
+        function renderColors(selectedColor) {
+            colorSelector.innerHTML = '';
+            // Renderizza i colori predefiniti
+            colors.forEach(color => {
+                const swatch = document.createElement('div');
+                swatch.className = 'color-swatch';
+                if (selectedColor && selectedColor.start === color.start && !selectedColor.custom) {
+                    swatch.classList.add('selected');
+                }
+                swatch.style.backgroundImage = `linear-gradient(to right, ${color.start}, ${color.end})`;
+                swatch.dataset.colorStart = color.start;
+                swatch.dataset.colorEnd = color.end;
+                swatch.addEventListener('click', (e) => {
+                    document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+                    e.target.classList.add('selected');
+                });
+                colorSelector.appendChild(swatch);
+            });
+
+            // Renderizza il selettore personalizzato
+            const customContainer = document.createElement('div');
+            customContainer.className = 'custom-color-container';
+            const isCustomSelected = selectedColor && selectedColor.custom;
+            const startColor = isCustomSelected ? selectedColor.start : '#aabbcc';
+            const endColor = isCustomSelected ? selectedColor.end : '#ccbbaa';
+
+            customContainer.innerHTML = `
+                <div id="custom-color-swatch" class="color-swatch ${isCustomSelected ? 'selected' : ''}"></div>
+                <input type="color" id="color-start-picker" value="${startColor}">
+                <input type="color" id="color-end-picker" value="${endColor}">
+                <span class="text-sm text-gray-600">Personalizza</span>
+            `;
+            colorSelector.appendChild(customContainer);
+
+            const customSwatch = document.getElementById('custom-color-swatch');
+            const startPicker = document.getElementById('color-start-picker');
+            const endPicker = document.getElementById('color-end-picker');
+            
+            function updateCustomSwatchGradient() {
+                customSwatch.style.backgroundImage = `linear-gradient(to right, ${startPicker.value}, ${endPicker.value})`;
+            }
+            updateCustomSwatchGradient();
+
+            customSwatch.addEventListener('click', () => {
+                document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+                customSwatch.classList.add('selected');
+            });
+
+            startPicker.addEventListener('input', updateCustomSwatchGradient);
+            endPicker.addEventListener('input', updateCustomSwatchGradient);
+        }
+        
+        function renderQuestions(questions) {
+            const questionsContainer = document.getElementById('questions-container');
+            questionsContainer.innerHTML = '';
+            questions.forEach((q, index) => {
+                const card = document.createElement('div');
+                card.className = 'question-card';
+                card.dataset.questionId = q.id;
+                let answersHtml = q.answers.map((ans, ansIndex) => `
+                    <div class="flex items-center space-x-3 mb-2">
+                        <input type="radio" name="correct_answer_${q.id}" ${ans.correct ? 'checked' : ''} class="w-4 h-4 flex-shrink-0">
+                        <input type="text" placeholder="Risposta ${ansIndex + 1}" value="${ans.text}" class="w-full p-2 border rounded-md">
+                        ${q.answers.length > 2 ? `<button class="delete-answer-btn p-1 text-gray-400 hover:text-red-600 rounded-full flex-shrink-0" data-answer-index="${ansIndex}"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg></button>` : ''}
+                    </div>
+                `).join('');
+
+                card.innerHTML = `
+                     <div class="flex justify-between items-center mb-4">
+                        <label class="font-semibold">Domanda ${index + 1}</label>
+                        ${questions.length > 1 ? `<button class="delete-question-btn btn btn-danger btn-sm">Elimina</button>` : ''}
+                    </div>
+                    <textarea placeholder="Testo della domanda..." class="w-full p-2 border rounded-md mb-4" rows="3">${q.question}</textarea>
+                    <div class="answers-list">${answersHtml}</div>
+                    <button class="add-answer-btn mt-3 text-sm btn btn-secondary w-full">+ Aggiungi Risposta</button>
+                `;
+                questionsContainer.appendChild(card);
+            });
+        }
+        
+        // --- FUNZIONI DI GESTIONE DATI ---
+        function updateStateFromEditor() {
+            if (!currentQuiz) return;
+            currentQuiz.title = document.getElementById('quiz-title').value;
+            currentQuiz.referrer = document.getElementById('quiz-referrer').value;
+            currentQuiz.introText = document.getElementById('quiz-intro-text').value;
+            currentQuiz.quizTopic = document.getElementById('quiz-topic').value;
+            
+            const selectedSwatch = document.querySelector('.color-swatch.selected');
+            if (selectedSwatch) {
+                if (selectedSwatch.id === 'custom-color-swatch') {
+                    currentQuiz.color = {
+                        start: document.getElementById('color-start-picker').value,
+                        end: document.getElementById('color-end-picker').value,
+                        custom: true
+                    };
+                } else {
+                    currentQuiz.color = {
+                        start: selectedSwatch.dataset.colorStart,
+                        end: selectedSwatch.dataset.colorEnd,
+                        custom: false
+                    };
+                }
+            } else {
+                currentQuiz.color = colors[0]; // Fallback
+            }
+
+            const questions = [];
+            document.querySelectorAll('.question-card').forEach(card => {
+                const questionText = card.querySelector('textarea').value;
+                const answers = [];
+                let correctAnswerIndex = -1;
+                card.querySelectorAll('input[type="radio"]').forEach((radio, index) => {
+                    if (radio.checked) correctAnswerIndex = index;
+                });
+                card.querySelectorAll('input[type="text"]').forEach((input, index) => {
+                    answers.push({ text: input.value, correct: index === correctAnswerIndex });
+                });
+                questions.push({ id: parseInt(card.dataset.questionId), question: questionText, answers: answers });
+            });
+            currentQuiz.questions = questions;
+            
+            currentQuiz.highScoreThreshold = parseInt(document.getElementById('quiz-high-score').value) || 80;
+            currentQuiz.mediumScoreThreshold = parseInt(document.getElementById('quiz-medium-score').value) || 40;
+            currentQuiz.results = {
+                high: { title: document.getElementById('quiz-high-title').value, message: document.getElementById('quiz-high-message').value, ctaText: document.getElementById('quiz-high-cta-text').value, ctaLink: document.getElementById('quiz-high-cta-link').value },
+                medium: { title: document.getElementById('quiz-medium-title').value, message: document.getElementById('quiz-medium-message').value, ctaText: document.getElementById('quiz-medium-cta-text').value, ctaLink: document.getElementById('quiz-medium-cta-link').value },
+                low: { title: document.getElementById('quiz-low-title').value, message: document.getElementById('quiz-low-message').value, ctaText: document.getElementById('quiz-low-cta-text').value, ctaLink: document.getElementById('quiz-low-cta-link').value }
+            };
+        }
+
+        function renderPreview() {
+            updateStateFromEditor();
+            const previewQuiz = JSON.parse(JSON.stringify(currentQuiz));
+            const validQuestions = previewQuiz.questions.filter(q => q.question.trim() !== '' && q.answers.length > 1 && q.answers.every(a => a.text.trim() !== ''));
+            
+            if (validQuestions.length === 0 && previewQuiz.introText.trim() === '') {
+                 alert("Aggiungi un testo introduttivo o almeno una domanda completa per generare un'anteprima.");
+                 return;
+            }
+            previewQuiz.questions = validQuestions;
+            
+            const previewFrame = document.getElementById('preview-frame');
+            // L'iframe ha già il template caricato. Ora inviamo i dati.
+            previewFrame.onload = () => {
+                previewFrame.contentWindow.postMessage(previewQuiz, '*');
+            };
+            // Se è già caricato, l'onload potrebbe non scattare, quindi inviamo subito
+            if (previewFrame.contentWindow && previewFrame.contentWindow.postMessage) {
+                 previewFrame.contentWindow.postMessage(previewQuiz, '*');
+            }
+        }
+        
+        function generateSingleQuizHtml(quizId) {
+            const quiz = allQuizzes.find(q => q.id === quizId);
+            if (!quiz) return '';
+            const library = { [quiz.referrer || 'quiz']: quiz };
+             return universalQuizTemplate.replace("{{QUIZ_LIBRARY}}", JSON.stringify(library, null, 2));
+        }
+        
+        // --- GEMINI API ---
+        async function callGeminiAPI(prompt, button) {
+            const originalContent = button.innerHTML;
+            button.innerHTML = `<svg class="spinner h-5 w-5 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+            button.disabled = true;
+
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const result = await response.json();
+                const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                return text ? text.trim().replace(/^"|"$/g, '') : ''; // Pulisce il testo e rimuove virgolette
+            } catch (error) {
+                console.error("Gemini API call failed:", error);
+                alert("Si è verificato un errore durante la generazione del testo. Controlla la console per maggiori dettagli.");
+                return '';
+            } finally {
+                button.innerHTML = originalContent;
+                button.disabled = false;
+            }
+        }
+
+
+        // --- LOCAL STORAGE ---
+        function saveQuizzes() { localStorage.setItem('multiQuizGeneratorAdvanced', JSON.stringify(allQuizzes)); }
+        function loadQuizzes() {
+            const data = localStorage.getItem('multiQuizGeneratorAdvanced');
+            allQuizzes = data ? JSON.parse(data) : [];
+        }
+        
+        // --- EVENT LISTENERS ---
+        document.getElementById('add-new-quiz-btn').addEventListener('click', () => {
+            const newQuiz = {
+                id: Date.now(), title: 'Nuovo Quiz', referrer: `quiz-${Date.now()}`,
+                introText: '',
+                quizTopic: '',
+                color: colors[0], 
+                questions: [{ id: Date.now(), question: '', answers: [{ text: '', correct: true }, { text: '', correct: false }]}],
+                highScoreThreshold: 80, mediumScoreThreshold: 40, results: defaultResults,
+            };
+            showEditorView(newQuiz);
+        });
+
+        document.getElementById('back-to-list-btn').addEventListener('click', showListView);
+
+        document.getElementById('save-quiz-btn').addEventListener('click', () => {
+            updateStateFromEditor();
+            const index = allQuizzes.findIndex(q => q.id === currentQuiz.id);
+            if (index > -1) allQuizzes[index] = currentQuiz;
+            else allQuizzes.push(currentQuiz);
+            saveQuizzes();
+            alert('Quiz salvato con successo!');
+            showListView();
+        });
+        
+        document.getElementById('add-question-btn').addEventListener('click', () => {
+            updateStateFromEditor();
+            currentQuiz.questions.push({
+                id: Date.now(), question: "", answers: [ { text: "", correct: true }, { text: "", correct: false } ]
+            });
+            renderQuestions(currentQuiz.questions);
+        });
+
+        document.getElementById('generate-preview-btn').addEventListener('click', renderPreview);
+
+        document.querySelector('#questions-container').addEventListener('click', e => {
+            const questionCard = e.target.closest('.question-card');
+            if (!questionCard) return;
+
+            const isDeleteQuestion = e.target.closest('.delete-question-btn');
+            const isAddAnswer = e.target.closest('.add-answer-btn');
+            const isDeleteAnswer = e.target.closest('.delete-answer-btn');
+
+            if (isDeleteQuestion || isAddAnswer || isDeleteAnswer) {
+                updateStateFromEditor();
+                const questionId = parseInt(questionCard.dataset.questionId);
+                const question = currentQuiz.questions.find(q => q.id === questionId);
+
+                if (isDeleteQuestion) {
+                    currentQuiz.questions = currentQuiz.questions.filter(q => q.id !== questionId);
+                }
+                if (isAddAnswer && question) {
+                    question.answers.push({text: '', correct: false});
+                }
+                if (isDeleteAnswer && question) {
+                    const answerIndex = parseInt(isDeleteAnswer.dataset.answerIndex);
+                    question.answers.splice(answerIndex, 1);
+                    if (!question.answers.some(a => a.correct) && question.answers.length > 0) {
+                       question.answers[0].correct = true;
+                    }
+                }
+                renderQuestions(currentQuiz.questions);
+            }
+        });
+        
+        document.getElementById('config-panel').addEventListener('click', async e => {
+            const geminiBtn = e.target.closest('.gemini-btn');
+            if (!geminiBtn) return;
+
+            const topic = document.getElementById('quiz-topic').value.trim();
+            if (!topic) {
+                alert("Per favore, inserisci prima l'argomento principale del quiz.");
+                document.getElementById('quiz-topic').focus();
+                return;
+            }
+
+            const targetId = geminiBtn.dataset.target;
+            const type = geminiBtn.dataset.type; // 'titolo' o 'messaggio'
+            const level = geminiBtn.dataset.level; // 'alto', 'medio', o 'basso'
+            
+            const prompt = `Sei un esperto di copywriting per quiz online. L'argomento del quiz è "${topic}". Genera un ${type} breve, conciso e motivazionale per un utente che ha ottenuto un punteggio ${level}. Il tono deve essere incoraggiante e creativo. Fornisci solo il testo, senza markdown, virgolette o frasi introduttive.`;
+
+            const generatedText = await callGeminiAPI(prompt, geminiBtn);
+            if (generatedText) {
+                document.getElementById(targetId).value = generatedText;
+            }
+        });
+
+
+        quizListContainer.addEventListener('click', e => {
+            const btn = e.target.closest('button');
+            if (!btn) return;
+            const quizId = parseInt(btn.dataset.id);
+
+            if (btn.classList.contains('edit-quiz-btn')) {
+                const quizToEdit = allQuizzes.find(q => q.id === quizId);
+                showEditorView(JSON.parse(JSON.stringify(quizToEdit)));
+            }
+            if (btn.classList.contains('delete-quiz-btn')) {
+                if (confirm('Sei sicuro di voler eliminare questo quiz?')) {
+                    allQuizzes = allQuizzes.filter(q => q.id !== quizId);
+                    saveQuizzes();
+                    renderQuizList();
+                }
+            }
+             if (btn.classList.contains('duplicate-quiz-btn')) {
+                const quizToDuplicate = allQuizzes.find(q => q.id === quizId);
+                if (quizToDuplicate) {
+                    const newQuiz = JSON.parse(JSON.stringify(quizToDuplicate));
+                    newQuiz.id = Date.now();
+                    newQuiz.title = `Copia di ${newQuiz.title}`;
+                    newQuiz.referrer = `${newQuiz.referrer}-copia-${Date.now()}`;
+                    allQuizzes.push(newQuiz);
+                    saveQuizzes();
+                    renderQuizList();
+                }
+            }
+            if (btn.classList.contains('get-code-btn')) {
+                const quiz = allQuizzes.find(q => q.id === quizId);
+                const htmlCode = generateSingleQuizHtml(quizId);
+                document.getElementById('modal-title').innerText = `Codice per "${quiz.title}"`;
+                document.getElementById('code-output').value = htmlCode;
+                codeModal.style.display = 'flex';
+            }
+        });
+
+        document.getElementById('generate-universal-code-btn').addEventListener('click', () => {
+             if (allQuizzes.length === 0) {
+                alert("Crea almeno un quiz prima di generare il codice universale.");
+                return;
+            }
+            const quizLibrary = allQuizzes.reduce((acc, quiz) => {
+                if (quiz.referrer) acc[quiz.referrer] = quiz;
+                return acc;
+            }, {});
+            const finalHtml = universalQuizTemplate.replace('{{QUIZ_LIBRARY}}', JSON.stringify(quizLibrary, null, 2));
+            document.getElementById('modal-title').innerText = 'Codice Universale';
+            document.getElementById('code-output').value = finalHtml;
+            codeModal.style.display = 'flex';
+        });
+        
+        document.getElementById('import-code-btn').addEventListener('click', () => {
+            const code = document.getElementById('import-code-area').value;
+            const match = code.match(/<script id="quiz-data-container"[^>]*>([\s\S]*?)<\/script>/);
+            if (!match || !match[1]) {
+                alert("Codice non valido o dati del quiz non trovati. Assicurati di incollare il codice completo generato dal tool.");
+                return;
+            }
+
+            try {
+                const quizLibrary = JSON.parse(match[1]);
+                const importedQuizzes = Object.values(quizLibrary);
+                let addedCount = 0;
+                let updatedCount = 0;
+
+                importedQuizzes.forEach(importedQuiz => {
+                    const existingQuizIndex = allQuizzes.findIndex(q => q.id === importedQuiz.id);
+                    if (existingQuizIndex > -1) {
+                        if (confirm(`Un quiz con ID "${importedQuiz.id}" ("${importedQuiz.title}") esiste già. Vuoi sovrascriverlo?`)) {
+                            allQuizzes[existingQuizIndex] = importedQuiz;
+                            updatedCount++;
+                        }
+                    } else {
+                        allQuizzes.push(importedQuiz);
+                        addedCount++;
+                    }
+                });
+
+                saveQuizzes();
+                renderQuizList();
+                alert(`Importazione completata! ${addedCount} quiz aggiunti e ${updatedCount} quiz aggiornati.`);
+                document.getElementById('import-code-area').value = '';
+
+            } catch (e) {
+                alert("Errore durante la lettura dei dati del quiz. Il codice potrebbe essere corrotto.");
+                console.error("Import error:", e);
+            }
+        });
+
+        document.getElementById('close-modal-btn').addEventListener('click', () => codeModal.style.display = 'none');
+        document.getElementById('copy-code-btn').addEventListener('click', () => {
+            document.getElementById('code-output').select();
+            document.execCommand('copy');
+            const btn = document.getElementById('copy-code-btn');
+            const originalText = btn.innerText;
+            btn.innerText = "Copiato!";
+            setTimeout(() => { btn.innerText = originalText; }, 2000);
+        });
+
+        // --- INIZIALIZZAZIONE ---
+        loadQuizzes();
+        showListView();
+    </script>
+</body>
+</html>
