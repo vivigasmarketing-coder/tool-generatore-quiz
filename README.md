@@ -35,6 +35,7 @@ startBtn.addEventListener('click', function() {
     }
 });
 ```
+<img width="939" height="564" alt="image" src="https://github.com/user-attachments/assets/5f40155a-694d-4b43-8a89-013e8aa26e88" />
 
 ### Tracciamento per il pulsante finale (CTA) ###
 Questo codice traccia i click sul pulsante finale che compare nella schermata dei risultati (es. "Scopri di più").
@@ -52,4 +53,6 @@ resultLinkEl.addEventListener('click', function() {
     }
 });
 ```
+<img width="947" height="1065" alt="image" src="https://github.com/user-attachments/assets/46a70235-c777-4793-b61a-8ceb4d6aff85" />
+
 :bulb:In sintesi, stai semplicemente aggiungendo un nuovo "ascoltatore" (addEventListener) a ciascun pulsante per inviare l'evento di tracciamento specifico quando vengono cliccati. Il codice è già configurato per recuperare dinamicamente il tipo di quiz (quizConfig.referrer) e l'azione corretta (start o finish).
