@@ -2,7 +2,8 @@
 Per generare un nuovo quiz è possibile farlo da questo tool Generatore di Quiz Avanzato https://vivigasmarketing-coder.github.io/tool-generatore-quiz/main che consente di generarne di nuovi a più risposte e personalizzare colori, cta e testi in funzione della percentuale di risposte corrette.
 Il tool consente di copiare i singoli quiz, generare codici univoci o generare un codice universale per l'import su instapage e associabile ad un referrer personalizzato.
 
-Per l'import è sufficiente copiare il codice in allegato nella sezione dedicata del tool e si riavrà la situazione as-is.
+Per l'import è sufficiente copiare il codice presente alla pagina /codice-generato.html. Nella sezione dedicata del tool e si riavrà la situazione as-is.
+
 Ogni volta conviene salvare il codice come avanzamento.
 # Pubblicazione su Instapage #
 #### I quiz sono tutti inseriti dentro un unica pagina in Instapage. ####
