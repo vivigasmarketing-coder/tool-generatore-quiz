@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF--8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; }
+        .quiz-body { font-family: 'Inter', sans-serif; }
+        .quiz-container, .results-container { transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out; }
+        .question-fade-out { opacity: 0; transform: translateY(-20px); }
+        .question-fade-in { opacity: 1; transform: translateY(0); }
+        .answer-btn.correct { background-color: #34C759; color: white; border-color: #34C759; }
+        .answer-btn.incorrect { background-color: #FF3B30; color: white; border-color: #FF3B30; }
+        .answer-btn:disabled { cursor: not-allowed; }
+        .btn-gradient { border: none; }
+        .btn-gradient:hover { opacity: 0.9; }
+        .gradient-text {
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+		/* ----- MODIFICA AGGIUNTA QUI ----- */
+        #result-link {
+            position: relative;
+            z-index: 9999;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="quiz-app-container" class="quiz-body w-full max-w-2xl mx-auto p-4 sm:p-6 md:p-8">
+        </div>
+    
+    <script id="quiz-data-container" type="application/json">
+        {
+  "greentips": {
+    "id": 1759236492187,
+    "title": "Quanto ne sai di Energia?",
+    "referrer": "greentips",
+    "introText": "Mettiti alla prova con 5 domande in 2 minuti!",
+    "color": {
+      "start": "#3AA2DA",
+      "end": "#6EC18A",
+      "custom": false
+    },
+    "questions": [
+      {
+        "id": 1759236492187,
+        "question": "Qual è l'unità di misura dell'energia elettrica?",
+        "answers": [
+          {
+            "text": "Smc",
+            "correct": false
+          },
+          {
+            "text": "Volt",
+            "correct": false
+          },
+          {
+            "text": "Kwh",
+            "correct": true
+          },
+          {
+            "text": "Kcal",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "id": 1759236584326,
+        "question": "Quale delle seguenti pratiche NON contribuisce al risparmio per la tua casa?",
+        "answers": [
+          {
+            "text": "Utilizzare lampadine a LED",
+            "correct": false
+          },
+          {
+            "text": "Isolare finestre e porte",
+            "correct": false
+          },
+          {
+            "text": "Spegnere il riscaldamento ogni volta che si esce di casa",
+            "correct": true
+          },
+          {
+            "text": "Ridurre l'uso dei climatizzatori",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "id": 1759236610257,
+        "question": "Quale è la città più \"green\" d'Italia (Legambiente, 2023)",
+        "answers": [
+          {
+            "text": "Terni",
+            "correct": false
+          },
+          {
+            "text": "Bologna",
+            "correct": false
+          },
+          {
+            "text": "Trento",
+            "correct": true
+          },
+          {
+            "text": "Bolzano",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "id": 1759236652629,
+        "question": "Quale di questi elettrodomestici consuma di più?",
+        "answers": [
+          {
+            "text": "Phon",
+            "correct": true
+          },
+          {
+            "text": "Microonde",
+            "correct": false
+          },
+          {
+            "text": "Lavastoviglie",
+            "correct": false
+          },
+          {
+            "text": "Televisione",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "id": 1759236682760,
+        "question": "Quale delle seguenti azioni NON può causare un blackout energetico?",
+        "answers": [
+          {
+            "text": "Utilizzare contemporaneamente svariati elettrodomestici",
+            "correct": false
+          },
+          {
+            "text": "Fenomeni atmosferici estremi",
+            "correct": false
+          },
+          {
+            "text": "Guasti alle reti e contatto fra cavi elettrici",
+            "correct": false
+          },
+          {
+            "text": "Appoggiare indumenti bagnati sopra i caloriferi",
+            "correct": true
+          }
+        ]
+      }
+    ],
+    "highScoreThreshold": 80,
+    "mediumScoreThreshold": 40,
+    "results": {
+      "high": {
+        "title": "Complimenti, sei un Campione.",
+        "message": "Hai superato tutte le sfide con maestria!",
+        "ctaText": "Scopri la nostra migliore offerta",
+        "ctaLink": "https://offerta.vivienergia.it/viviconsapevole"
+      },
+      "medium": {
+        "title": "Bene, ma con qualche inciampo!",
+        "message": "Hai dato il meglio di te, ma c'è spazio per migliorare.",
+        "ctaText": "Scopri la nostra migliore offerta",
+        "ctaLink": "https://offerta.vivienergia.it/viviconsapevole"
+      },
+      "low": {
+        "title": "Grazie per aver partecipato!",
+        "message": "Non tutto è andato liscio ma premiamo il tuo impegno!",
+        "ctaText": "Scopri la nostra migliore offerta",
+        "ctaLink": "https://offerta.vivienergia.it/viviconsapevole"
+      }
+    },
+    "quizTopic": "",
+    "headerText": "Quanto ne sai di Energia?"
+  },
+  "telethon": {
+    "id": 1759237435292,
+    "title": "Energia per la Ricerca: mettiti alla prova!",
+    "referrer": "telethon",
+    "introText": "Mettiti alla prova con 9 domande in pochi minuti!",
+    "quizTopic": "",
+    "color": {
+      "start": "#3AA2DA",
+      "end": "#6EC18A",
+      "custom": false
+    },
+    "questions": [
+      {
+        "id": 1759237435292,
+        "question": "VIVI energia collabora con Fondazione Telethon dal 2019. Qual è il nome dell’iniziativa che abbiamo lanciato per sostenere la ricerca?",
+        "answers": [
+          {
+            "text": "Energia per la Vita",
+            "correct": false
+          },
+          {
+            "text": "Fuori dal Buio",
+            "correct": true
+          },
+          {
+            "text": "Luce sulla Ricerca",
+            "correct": false
+          },
+          {
+            "text": "Insieme per donare",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "id": 1759237507446,
+        "question": "Nell'ambito della partnership con Fondazione Telethon, nel 2019 VIVI energia ha contribuito all'acquisto di uno strumento per l'istituto TIGEM - Istituto Telethon di Genetica e Medicina. Di quale strumento si trattava?",
+        "answers": [
+          {
+            "text": "Un microscopio elettronico per analisi cellulare",
+            "correct": false
+          },
+          {
+            "text": "Un supercomputer per l'elaborazione di dati genetici",
+            "correct": false
+          },
+          {
+            "text": "Uno spettrofotometro per la quantizzazione di DNA e proteine",
+            "correct": true
+          },
+          {
+            "text": "Una macchina per la risonanza magnetica",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "id": 1759237538114,
+        "question": "Oltre a raccogliere fondi per la ricerca scientifica sulle malattie genetiche rare, qual è l’altro importante obiettivo della Maratona Televisiva di Fondazione Telethon, in onda sulle reti RAI nel mese di dicembre?",
+        "answers": [
+          {
+            "text": "Selezionare i progetti di ricerca tramite televoto",
+            "correct": false
+          },
+          {
+            "text": "Offrire consulenze mediche in diretta al pubblico",
+            "correct": false
+          },
+          {
+            "text": "Sensibilizzare l'opinione pubblica e raccontare le storie dei pazienti che grazie alla ricerca hanno riscritto il loro futuro",
+            "correct": true
+          },
+          {
+            "text": "Premiare le migliori scoperte scientifiche dell'anno",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "id": 1759237570878,
+        "question": "Qual è il prodotto solidale di Fondazione Telethon, distribuito dai volontari di tutta Italia durante la Campagna di Natale?",
+        "answers": [
+          {
+            "text": "Le Uova di Pasqua",
+            "correct": false
+          },
+          {
+            "text": "I Panettoni della ricerca",
+            "correct": false
+          },
+          {
+            "text": "I Cuoricini di cioccolato",
+            "correct": true
+          },
+          {
+            "text": "Le Stelle di Natale",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "id": 1759237597179,
+        "question": "Qual è una delle meccaniche di raccolta fondi con cui VIVI energia contribuisce a sostenere l’iniziativa \"Fuori dal Buio\"?",
+        "answers": [
+          {
+            "text": "Attraverso aste di beneficenza online",
+            "correct": false
+          },
+          {
+            "text": "Con la vendita di prodotti solidali a marchio condiviso",
+            "correct": false
+          },
+          {
+            "text": "Offrendo incentivi per l'installazione di impianti fotovoltaico",
+            "correct": false
+          },
+          {
+            "text": "Devolvere una donazione per ogni nuovo contratto di fornitura attivato durante la Campagna di Natale",
+            "correct": true
+          }
+        ]
+      },
+      {
+        "id": 1759237622291,
+        "question": "La Fondazione Telethon ha due principali istituti di ricerca in Italia. In quali città hanno sede?",
+        "answers": [
+          {
+            "text": "Roma e Firenze",
+            "correct": false
+          },
+          {
+            "text": "Milano e Pozzuoli",
+            "correct": true
+          },
+          {
+            "text": "Torino e Palermo",
+            "correct": false
+          },
+          {
+            "text": "Bologna e Genova",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "id": 1759237646037,
+        "question": "La Fondazione organizza per le aziende partner come VIVI energia dei webinar di approfondimento. Qual è lo scopo principale di questi incontri online?",
+        "answers": [
+          {
+            "text": "Presentare in anteprima le campagne di raccolta fondi",
+            "correct": false
+          },
+          {
+            "text": "Coinvolgere i dipendenti delle aziende nel mondo della ricerca, attraverso la condivisione di testimonianze e approfondimenti tematici",
+            "correct": true
+          },
+          {
+            "text": "Offrire corsi di formazione sulla gestione del non-profit",
+            "correct": false
+          },
+          {
+            "text": "Selezionare le aziende per le future collaborazioni",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "id": 1759237669445,
+        "question": "Nel giugno 2024, una delegazione di VIVI energia ha visitato l'istituto SR-TIGET. Quale valore ha un'esperienza come questa per un'azienda partner?",
+        "answers": [
+          {
+            "text": "Permette di ottenere sconti fiscali aggiuntivi",
+            "correct": false
+          },
+          {
+            "text": "Dà diritto a partecipare alle decisioni scientifiche dell'istituto",
+            "correct": false
+          },
+          {
+            "text": "Consente di riconoscere l'impatto del proprio sostegno, visitare i luoghi della ricerca e incontrare i ricercatori",
+            "correct": true
+          },
+          {
+            "text": "È un requisito obbligatorio per poter rinnovare la partnership annuale",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "id": 1759237692188,
+        "question": "\"Verso la cura\" sintetizza un obiettivo condiviso della partnership stretta tra Vivi Energia e Fondazione Telethon. Quale concetto esprime questa espressione?",
+        "answers": [
+          {
+            "text": "Che la cura è un traguardo raggiunto per tutte le malattie genetiche",
+            "correct": true
+          },
+          {
+            "text": "Che la cura è un percorso che spetta solo ai medici e non ai pazienti",
+            "correct": false
+          },
+          {
+            "text": "Che la ricerca è un cammino da intraprendere con costanza, che richiede un impegno continuo e condiviso",
+            "correct": false
+          },
+          {
+            "text": "Che la cura si può ottenere solo con farmaci provenienti dall'estero",
+            "correct": false
+          }
+        ]
+      }
+    ],
+    "highScoreThreshold": 80,
+    "mediumScoreThreshold": 40,
+    "results": {
+      "high": {
+        "title": "Complimenti, sei un Campione della Ricerca!",
+        "message": "La tua conoscenza della nostra partnership è eccezionale. Grazie per essere al nostro fianco!",
+        "ctaText": "Scopri la partnership",
+        "ctaLink": "https://www.vivienergia.it/progetti/telethon"
+      },
+      "medium": {
+        "title": "Ottimo lavoro, Sostenitore della Scienza!",
+        "message": "Conosci bene il nostro impegno. Ogni piccolo gesto ci avvicina alla cura. Continua a seguirci!",
+        "ctaText": "Scopri la partnership",
+        "ctaLink": "https://www.vivienergia.it/progetti/telethon"
+      },
+      "low": {
+        "title": "Grazie per aver partecipato!",
+        "message": "Ogni domanda è un'occasione per imparare di più sul nostro impegno comune. Scopri di più sulla nostra partnership!",
+        "ctaText": "Scopri la partnership",
+        "ctaLink": "https://www.vivienergia.it/progetti/telethon"
+      }
+    }
+  },
+  "fotovoltaico": {
+    "id": 1759237948309,
+    "title": "Vediamo quanto ne sai sull'energia solare!",
+    "referrer": "fotovoltaico",
+    "introText": "5 domande, riuscirai a farcela? ✌",
+    "quizTopic": "",
+    "color": {
+      "start": "#F49593",
+      "end": "#F7BF28",
+      "custom": false
+    },
+    "questions": [
+      {
+        "id": 1759237948309,
+        "question": "Quale dei seguenti NON è un componente di un impianto fotovoltaico?",
+        "answers": [
+          {
+            "text": "Inverter",
+            "correct": false
+          },
+          {
+            "text": "Sistema di accumulo (opzionale)",
+            "correct": false
+          },
+          {
+            "text": "Modulo/pannello fotovoltaico",
+            "correct": false
+          },
+          {
+            "text": "Cavo HDMI",
+            "correct": true
+          }
+        ]
+      },
+      {
+        "id": 1759238000791,
+        "question": "Di che manutenzione ordinaria necessita un impianto fotovoltaico?",
+        "answers": [
+          {
+            "text": "Ogni due anni l'intero impianto va disinstallato e spedito ad un centro specializzato",
+            "correct": false
+          },
+          {
+            "text": "Sono sufficienti un paio di lavaggi annuali dei pannelli",
+            "correct": true
+          },
+          {
+            "text": "Non serve nessuna manutenzione",
+            "correct": false
+          },
+          {
+            "text": "Sono necessari almeno 3 lavaggi al mese, ad opera di tecnici appositi.",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "id": 1759238032928,
+        "question": "A cosa servono le batterie in un impianto?",
+        "answers": [
+          {
+            "text": "A tenere acceso l'impianto anche durante la notte",
+            "correct": false
+          },
+          {
+            "text": "Ad accumulare l'energia in eccesso per riutilizzarla quando vuoi",
+            "correct": true
+          },
+          {
+            "text": "Per rivendere al GSE l'energia in eccesso",
+            "correct": false
+          },
+          {
+            "text": "A nulla, hanno solo uno scopo estetico",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "id": 1759238054412,
+        "question": "I moduli fotovoltaici non funzionano se è nuvoloso",
+        "answers": [
+          {
+            "text": "VERO",
+            "correct": true
+          },
+          {
+            "text": "FALSO",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "id": 1759238066810,
+        "question": "Quale è il vantaggio di installare un impianto fotovoltaico con VIVI energia",
+        "answers": [
+          {
+            "text": "Ottimo ritorno dell’investimento",
+            "correct": false
+          },
+          {
+            "text": "Autoproduzione di energia pulita",
+            "correct": false
+          },
+          {
+            "text": "Gestione completa delle pratiche",
+            "correct": false
+          },
+          {
+            "text": "Tutte le precedenti",
+            "correct": true
+          }
+        ]
+      }
+    ],
+    "highScoreThreshold": 80,
+    "mediumScoreThreshold": 40,
+    "results": {
+      "high": {
+        "title": "Complimenti, sei un Campione.",
+        "message": "Hai superato tutte le sfide con maestria!",
+        "ctaText": "Scopri di più",
+        "ctaLink": "https://www.vivienergia.it/efficienza/fotovoltaico"
+      },
+      "medium": {
+        "title": "Bene, ma con qualche inciampo!",
+        "message": "Hai dato il meglio di te, ma c'è spazio per migliorare.",
+        "ctaText": "Scopri di più",
+        "ctaLink": "https://www.vivienergia.it/efficienza/fotovoltaico"
+      },
+      "low": {
+        "title": "Grazie per aver partecipato!",
+        "message": "Non tutto è andato liscio ma premiamo il tuo impegno!",
+        "ctaText": "Scopri di più",
+        "ctaLink": "https://www.vivienergia.it/efficienza/fotovoltaico"
+      }
+    }
+  },
+  "wallbox": {
+    "id": 1759238153998,
+    "title": "Vediamo quanto ne sai sulla mobilità elettrica!",
+    "referrer": "wallbox",
+    "introText": "5 domande, riuscirai a farcela? ✌",
+    "quizTopic": "",
+    "color": {
+      "start": "#3AA2DA",
+      "end": "#6EC18A",
+      "custom": false
+    },
+    "questions": [
+      {
+        "id": 1759238153998,
+        "question": "Quanto è l’impatto sull’ambiente di un’auto elettrica rispetto a una vettura a benzina?",
+        "answers": [
+          {
+            "text": "Tra il 5 e il 15% in meno",
+            "correct": false
+          },
+          {
+            "text": "Tra il 60 e il 70% in meno",
+            "correct": true
+          },
+          {
+            "text": "Tra il 40 e 45% in meno",
+            "correct": false
+          },
+          {
+            "text": "Non cambia nulla",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "id": 1759238350546,
+        "question": "Quanto tempo richiede ricaricare 100 km di autonomia presso una colonnina pubblica?",
+        "answers": [
+          {
+            "text": "Meno di 3 minuti",
+            "correct": false
+          },
+          {
+            "text": "Circa 10 minuti",
+            "correct": true
+          },
+          {
+            "text": "Circa 20 minuti",
+            "correct": false
+          },
+          {
+            "text": "Tra i 30 e i 40 minuti",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "id": 1759238384594,
+        "question": "Scegliendo una macchina elettrica...",
+        "answers": [
+          {
+            "text": "Abbatti i costi di manutenzione fino al 50%",
+            "correct": false
+          },
+          {
+            "text": "Non devi pagare il bollo",
+            "correct": false
+          },
+          {
+            "text": "In molte città puoi accedere alle ZTL",
+            "correct": false
+          },
+          {
+            "text": "Aiuti l'ambiente e riduci le emissioni",
+            "correct": false
+          },
+          {
+            "text": "Tutte le precedenti",
+            "correct": true
+          }
+        ]
+      },
+      {
+        "id": 1759238405062,
+        "question": "Quale delle seguenti NON è una pratica consigliata per una vettura elettrica?",
+        "answers": [
+          {
+            "text": "Prestare particolare attenzione alla pressione degli pneumatici",
+            "correct": false
+          },
+          {
+            "text": "Caricare al massimo fino al 80% della batteria",
+            "correct": false
+          },
+          {
+            "text": "Utilizzare spesso l'aria condizionata",
+            "correct": true
+          },
+          {
+            "text": "Mantenere una guida dinamica e non a velocità costante",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "id": 1759238426006,
+        "question": "Quale delle seguenti NON è una caratteristica delle wallbox di VIVI energia? ",
+        "answers": [
+          {
+            "text": "Ricarica obbligatoria a due mani",
+            "correct": true
+          },
+          {
+            "text": "Accessorio sistema di retroilluminazione a LED",
+            "correct": false
+          },
+          {
+            "text": "Dispositivo DC leakage",
+            "correct": false
+          },
+          {
+            "text": "Sistema Dynamic Load Management",
+            "correct": false
+          }
+        ]
+      }
+    ],
+    "highScoreThreshold": 80,
+    "mediumScoreThreshold": 40,
+    "results": {
+      "high": {
+        "title": "Complimenti, sei un Campione.",
+        "message": "Hai superato tutte le sfide con maestria!",
+        "ctaText": "Scopri di più",
+        "ctaLink": "https://www.vivienergia.it/efficienza/wallboxcasa"
+      },
+      "medium": {
+        "title": " Bene, ma con qualche inciampo!",
+        "message": "Hai dato il meglio di te, ma c'è spazio per migliorare.",
+        "ctaText": "Scopri di più",
+        "ctaLink": "https://www.vivienergia.it/efficienza/wallboxcasa"
+      },
+      "low": {
+        "title": "Grazie per aver partecipato!",
+        "message": "Non tutto è andato liscio ma premiamo il tuo impegno!",
+        "ctaText": "Scopri di più",
+        "ctaLink": "https://www.vivienergia.it/efficienza/wallboxcasa"
+      }
+    }
+  },
+  "caldaia": {
+    "id": 1759238587886,
+    "title": "Vediamo quanto ne sai sul mondo delle caldaie…",
+    "referrer": "caldaia",
+    "introText": "5 domande, riuscirai a farcela? ✌",
+    "quizTopic": "",
+    "color": {
+      "start": "#E81C69",
+      "end": "#F09724",
+      "custom": false
+    },
+    "questions": [
+      {
+        "id": 1759238587887,
+        "question": "Quant'è la vita media di una caldaia?",
+        "answers": [
+          {
+            "text": "5-7 anni",
+            "correct": false
+          },
+          {
+            "text": "10-20 anni",
+            "correct": true
+          },
+          {
+            "text": "30-35 anni",
+            "correct": false
+          },
+          {
+            "text": "Non c'è un periodo preciso, finché non si rompe",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "id": 1759238624087,
+        "question": "Quale di questi NON è un tipo di caldaia?",
+        "answers": [
+          {
+            "text": "Caldaia a condensazione",
+            "correct": false
+          },
+          {
+            "text": "Caldaia a gas",
+            "correct": false
+          },
+          {
+            "text": "Caldaia a legna/pellet",
+            "correct": true
+          },
+          {
+            "text": "Caldaia elettrica",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "id": 1759238648713,
+        "question": "Quale delle seguenti affermazioni è sbagliata? ",
+        "answers": [
+          {
+            "text": "L’efficienza energetica delle caldaie è espressa in una scala da 1 a 4 stelle",
+            "correct": false
+          },
+          {
+            "text": "La nostra caldaia può essere alimentata sia GPL che a Metano",
+            "correct": false
+          },
+          {
+            "text": "Una caldaia a condensazione è meno efficiente di una tradizionale.",
+            "correct": true
+          }
+        ]
+      },
+      {
+        "id": 1759238676423,
+        "question": "Dal 2015 In Italia possono essere prodotte, messe in vendita ed installate solamente caldaie a condensazione.",
+        "answers": [
+          {
+            "text": "VERO",
+            "correct": false
+          },
+          {
+            "text": "FALSO",
+            "correct": true
+          }
+        ]
+      },
+      {
+        "id": 1759238688575,
+        "question": "Quale delle seguenti è una caratteristica delle caldaie di VIVI energia?",
+        "answers": [
+          {
+            "text": "Risparmio energetico in bolletta",
+            "correct": false
+          },
+          {
+            "text": "Riduzione emissioni di ossido di azoto e monossido di carbonio fino al 70%",
+            "correct": false
+          },
+          {
+            "text": "Classe A",
+            "correct": false
+          },
+          {
+            "text": "Tutte le precedenti",
+            "correct": true
+          }
+        ]
+      }
+    ],
+    "highScoreThreshold": 80,
+    "mediumScoreThreshold": 40,
+    "results": {
+      "high": {
+        "title": "Complimenti, sei un Campione.",
+        "message": "Hai superato tutte le sfide con maestria!",
+        "ctaText": "Scopri di più",
+        "ctaLink": "https://www.vivienergia.it/efficienza/caldaiacasa"
+      },
+      "medium": {
+        "title": "Bene, ma con qualche inciampo!",
+        "message": "Hai dato il meglio di te, ma c'è spazio per migliorare.",
+        "ctaText": "Scopri di più",
+        "ctaLink": "https://www.vivienergia.it/efficienza/caldaiacasa"
+      },
+      "low": {
+        "title": "Grazie per aver partecipato!",
+        "message": "Non tutto è andato liscio ma premiamo il tuo impegno!",
+        "ctaText": "Scopri di più",
+        "ctaLink": "https://www.vivienergia.it/efficienza/caldaiacasa"
+      }
+    }
+  },
+  "climatizzatore": {
+    "id": 1759242732090,
+    "title": "Vediamo quanto ne sai sul gelo dei climatizzatori!",
+    "referrer": "climatizzatore",
+    "introText": "5 domande, riuscirai a farcela?",
+    "quizTopic": "",
+    "color": {
+      "start": "#077BBE",
+      "end": "#7E2889",
+      "custom": false
+    },
+    "questions": [
+      {
+        "id": 1759242732090,
+        "question": "Quale di questi NON è un tipo di climatizzatore?",
+        "answers": [
+          {
+            "text": "Climatizzatore ad acqua",
+            "correct": false
+          },
+          {
+            "text": "Climatizzatore portatile senza tubo",
+            "correct": false
+          },
+          {
+            "text": "Climatizzatore portatile con tubo",
+            "correct": false
+          },
+          {
+            "text": "Climatizzatore a pellet",
+            "correct": true
+          },
+          {
+            "text": "Climatizzatore a inverter",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "id": 1759242773674,
+        "question": "Qual è la temperatura ideale per raffreddare la casa?",
+        "answers": [
+          {
+            "text": "Almeno 10 gradi in meno rispetto l'esterno",
+            "correct": false
+          },
+          {
+            "text": "Bastano 2/3 gradi in meno della temperatura esterna",
+            "correct": true
+          },
+          {
+            "text": "Non c'è una temperatura ideale",
+            "correct": false
+          },
+          {
+            "text": "15 gradi",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "id": 1759242796466,
+        "question": "Dove NON posizionare il climatizzatore?",
+        "answers": [
+          {
+            "text": "Parte alta della parete",
+            "correct": false
+          },
+          {
+            "text": "Dietro divani o tende",
+            "correct": true
+          },
+          {
+            "text": "Parte bassa della parete",
+            "correct": false
+          },
+          {
+            "text": "In più di una stanza",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "id": 1759242810586,
+        "question": "Ogni quanto pulire le ventole e i filtri?",
+        "answers": [
+          {
+            "text": "Alla prima accensione stagionale",
+            "correct": true
+          },
+          {
+            "text": "Dopo ogni utilizzo",
+            "correct": false
+          },
+          {
+            "text": "Una pulizia annuale è sufficiente",
+            "correct": false
+          },
+          {
+            "text": "Mai",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "id": 1759242830490,
+        "question": "Quale delle seguenti NON è una caratteristica dei climatizzatori di VIVI energia?",
+        "answers": [
+          {
+            "text": "Elevata efficienza energetica",
+            "correct": false
+          },
+          {
+            "text": "Modalità di funzionamento silenziosa",
+            "correct": false
+          },
+          {
+            "text": "Funzione autopulizia",
+            "correct": false
+          },
+          {
+            "text": "Gestione unicamente tramite display analogico",
+            "correct": true
+          }
+        ]
+      }
+    ],
+    "highScoreThreshold": 80,
+    "mediumScoreThreshold": 40,
+    "results": {
+      "high": {
+        "title": "Complimenti, sei un Campione.",
+        "message": "Hai superato tutte le sfide con maestria!",
+        "ctaText": "Scopri di più",
+        "ctaLink": "https://www.vivienergia.it/efficienza/climatizzatorecasa"
+      },
+      "medium": {
+        "title": "Bene, ma con qualche inciampo!",
+        "message": "Hai dato il meglio di te, ma c'è spazio per migliorare.",
+        "ctaText": "Scopri di più",
+        "ctaLink": "https://www.vivienergia.it/efficienza/climatizzatorecasa"
+      },
+      "low": {
+        "title": "Grazie per aver partecipato!",
+        "message": "Non tutto è andato liscio ma premiamo il tuo impegno!",
+        "ctaText": "Scopri di più",
+        "ctaLink": "https://www.vivienergia.it/efficienza/climatizzatorecasa"
+      }
+    }
+  },
+  "depuratore": {
+    "id": 1759242911282,
+    "title": "Vediamo quanto ne sai sulla depurazione dell'acqua",
+    "referrer": "depuratore",
+    "introText": "5 domande, riuscirai a farcela?",
+    "quizTopic": "",
+    "color": {
+      "start": "#0071A6",
+      "end": "#2EB8C0",
+      "custom": false
+    },
+    "questions": [
+      {
+        "id": 1759242911282,
+        "question": "Partiamo dalle basi...\nPer quale motivo è importante usare un depuratore d'acqua?",
+        "answers": [
+          {
+            "text": "Per ridurre gli sprechi di acqua",
+            "correct": false
+          },
+          {
+            "text": "Per riscaldare l'acqua in modo più efficiente",
+            "correct": false
+          },
+          {
+            "text": "Per migliorare la qualità dell'acqua potabile",
+            "correct": true
+          },
+          {
+            "text": "Per rendere l'acqua più fresca e gassata",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "id": 1759242940610,
+        "question": "Quale delle seguenti è una tecnologia comunemente utilizzata nei depuratori d'acqua?",
+        "answers": [
+          {
+            "text": "Deumidificazione",
+            "correct": false
+          },
+          {
+            "text": "Osmosi inversa",
+            "correct": true
+          },
+          {
+            "text": "Elettrolisi",
+            "correct": false
+          },
+          {
+            "text": "Magnetizzazione",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "id": 1759242957242,
+        "question": "Quali contaminanti può rimuovere un depuratore?",
+        "answers": [
+          {
+            "text": "Cloro e composti organici volatili",
+            "correct": true
+          },
+          {
+            "text": "Metalli pesanti come piombo",
+            "correct": false
+          },
+          {
+            "text": "Batteri e virus",
+            "correct": false
+          },
+          {
+            "text": "Sabbia e detriti grossolani",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "id": 1759242973628,
+        "question": "Ogni quanto tempo è generalmente necessario cambiare i filtri di un depuratore d'acqua?",
+        "answers": [
+          {
+            "text": "Ogni 6-12 mesi",
+            "correct": true
+          },
+          {
+            "text": "Ogni settimana",
+            "correct": false
+          },
+          {
+            "text": "Ogni mese",
+            "correct": false
+          },
+          {
+            "text": "Mai",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "id": 1759242988282,
+        "question": "Quale di questi è un segno che il tuo depuratore ha bisogno di manutenzione?",
+        "answers": [
+          {
+            "text": "L'acqua filtra più velocemente del solito",
+            "correct": false
+          },
+          {
+            "text": "L'acqua filtrata diventa calda",
+            "correct": false
+          },
+          {
+            "text": "L'odore del filtro diventa evidente",
+            "correct": false
+          },
+          {
+            "text": "Diminuzione della pressione dell'acqua filtrata",
+            "correct": true
+          }
+        ]
+      }
+    ],
+    "highScoreThreshold": 80,
+    "mediumScoreThreshold": 40,
+    "results": {
+      "high": {
+        "title": "Complimenti, sei un Campione.",
+        "message": "Hai superato tutte le sfide con maestria!",
+        "ctaText": "Scopri di più",
+        "ctaLink": "https://www.vivienergia.it/efficienza/depuratore"
+      },
+      "medium": {
+        "title": "Bene, ma con qualche inciampo!",
+        "message": "Hai dato il meglio di te, ma c'è spazio per migliorare.",
+        "ctaText": "Scopri di più",
+        "ctaLink": "https://www.vivienergia.it/efficienza/depuratore"
+      },
+      "low": {
+        "title": "Grazie per aver partecipato!",
+        "message": "Non tutto è andato liscio ma premiamo il tuo impegno!",
+        "ctaText": "Scopri di più",
+        "ctaLink": "https://www.vivienergia.it/efficienza/depuratore"
+      }
+    }
+  }
+}
+    </script>
+
+    <script>
+        function getQuizFromURL() {
+            const dataEl = document.getElementById('quiz-data-container');
+            const quizLibrary = JSON.parse(dataEl.textContent);
+            const params = new URLSearchParams(window.location.search);
+            const referrer = params.get('referrer');
+            if (referrer && quizLibrary[referrer]) {
+                return quizLibrary[referrer];
+            }
+            const keys = Object.keys(quizLibrary);
+            if (keys.length > 0 && !referrer) {
+                return quizLibrary[keys[0]];
+            }
+            return null;
+        }
+
+        function buildAndRunQuiz(quizConfig) {
+            const appContainer = document.getElementById('quiz-app-container');
+            if (!quizConfig) {
+                appContainer.innerHTML = '<div class="text-center text-gray-600 p-8 bg-white rounded-lg shadow-md"><h2>Quiz non trovato.</h2><p>Assicurati che l\'URL contenga un parametro <code class="bg-gray-200 text-sm p-1 rounded">?referrer=ID</code> valido.</p></div>';
+                return;
+            }
+            
+            let headerHtml = '';
+            if (quizConfig.title && quizConfig.title.trim() !== '') {
+                headerHtml = `
+                <header class="flex items-center justify-center space-x-4 p-4 mb-6 bg-white rounded-2xl shadow-lg">
+                    <img src="https://vivienergia.imgix.net/uploads/2025/07/31123021/VIVIenergia_bandiera_CMYK-1.png" alt="Logo VIVIenergia" class="h-8 sm:h-10">
+                    <span class="gradient-text text-xl sm:text-2xl font-bold" style="background-image: linear-gradient(to right, ${quizConfig.color.start}, ${quizConfig.color.end});">${quizConfig.title}</span>
+                </header>
+                `;
+            }
+
+            const quizHtml = `
+                <main id="quiz-container" class="quiz-container bg-white p-6 md:p-8 rounded-2xl shadow-lg">
+                    <div id="intro-container" class="text-center"></div>
+                    <div id="question-area" class="hidden">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 id="question-counter" class="text-sm font-semibold text-gray-500"></h2>
+                            <div id="score-display" class="text-sm font-bold text-gray-700">Punteggio: 0</div>
+                        </div>
+                        <p id="question-text" class="text-xl md:text-2xl font-semibold text-gray-900 mb-6 min-h-[80px]"></p>
+                        <div id="answer-buttons" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                        <div class="mt-8 text-center">
+                            <button id="next-btn" class="btn-gradient text-white font-bold py-3 px-8 rounded-full transition-all duration-300 shadow-md hidden" style="background-image: linear-gradient(to right, ${quizConfig.color.start}, ${quizConfig.color.end})">Prossima Domanda</button>
+                        </div>
+                    </div>
+                </main>
+
+                <div id="results-container" class="results-container bg-white p-6 md:p-8 rounded-2xl shadow-lg hidden opacity-0 text-center">
+                    <h2 id="result-title" class="text-2xl md:text-3xl font-bold text-gray-800 mb-2"></h2>
+                    <p id="result-message" class="text-gray-600 mb-4"></p>
+                    <div class="bg-blue-100 text-blue-800 text-xl md:text-2xl font-bold py-4 px-6 rounded-xl mb-6 inline-block">
+                        Punteggio Finale: <span id="final-score"></span>
+                    </div>
+                    <a id="result-link" href="#" target="_blank" onclick="window.open(this.href, '_blank'); return false;" class="btn-gradient inline-block text-white font-bold py-3 px-8 rounded-full shadow-md mt-6 mb-8" style="background-image: linear-gradient(to right, ${quizConfig.color.start}, ${quizConfig.color.end})"></a>
+                    <div class="my-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">Riepilogo Risposte</h3>
+                        <div id="summary-container" class="text-left space-y-3"></div>
+                    </div>
+                    <button id="restart-btn" class="block mx-auto mt-6 text-blue-500 hover:underline">Riprova il Quiz</button>
+                </div>
+            `;
+            
+            const footerHtml = `
+                <footer class="text-white rounded-2xl shadow-lg mt-8 p-6 text-center" style="background-image: linear-gradient(to right, ${quizConfig.color.start}, ${quizConfig.color.end});">
+                    <img src="https://vivienergia.imgix.net/uploads/2025/07/31123019/VIVIenergia_bandiera_CMYK_Bianco-1.png" alt="Logo VIVIenergia Bianco" class="h-12 mx-auto mb-6">
+                    <div class="flex justify-center space-x-6 mb-4">
+                        <a href="https://www.facebook.com/VIVIenergia/?locale=it_IT" target="_blank" class="hover:opacity-80" aria-label="Facebook"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.494v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z"/></svg></a>
+                        <a href="https://www.instagram.com/vivi_energia/" target="_blank" class="hover:opacity-80" aria-label="Instagram"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.85s-.011 3.584-.069 4.85c-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07s-3.584-.012-4.85-.07c-3.252-.148-4.771-1.691-4.919-4.919-.058-1.265-.069-1.645-.069-4.85s.011-3.584.069-4.85c.149-3.225 1.664 4.771 4.919-4.919 1.266-.058 1.644-.07 4.85-.07zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948s.014 3.667.072 4.947c.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072s3.667-.014 4.947-.072c4.358-.2 6.78-2.618 6.98-6.98.059-1.281.073-1.689.073-4.948s-.014-3.667-.072-4.947c-.2-4.358-2.618-6.78-6.98-6.98-1.281-.059-1.689-.073-4.948-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.162 6.162 6.162 6.162-2.759 6.162-6.162-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4s1.791-4 4-4 4 1.79 4 4-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44 1.441-.645 1.441-1.44-.645-1.44-1.441-1.44z"/></svg></a>
+                        <a href="https://www.linkedin.com/company/vivi-energia/" target="_blank" class="hover:opacity-80" aria-label="LinkedIn"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M4.98 3.5c0 1.381-1.11 2.5-2.48 2.5s-2.48-1.119-2.48-2.5c0-1.38 1.11-2.5 2.48-2.5s2.48 1.12 2.48 2.5zm.02 4.5h-5v16h5v-16zm7.982 0h-4.968v16h4.969v-8.399c0-4.67 6.029-5.052 6.029 0v8.399h4.988v-10.131c0-7.88-8.922-7.593-11.018-3.714v-2.155z"/></svg></a>
+                        <a href="https://www.youtube.com/channel/UCtJHNoeWukENnTQC2NHGbEw" target="_blank" class="hover:opacity-80" aria-label="YouTube"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg></a>
+                    </div>
+                    <p class="text-xs text-gray-200 leading-relaxed">
+                    © Copyright 2004-2025 VIVIGAS S.p.A. - Privacy policy - Cookie policy - Informazioni legali - Richiesta Informazioni - Invio Reclamo Vivigas S.p.A. - Società a Socio Unico - Sede: Roncadelle (BS), 25030 - Via Vittorio Emanuele II, 4/28 - P.IVA 13149000153 Iscrizione Ufficio Imprese (Brescia) n. 13149000153 - REA (Brescia): 439186 - Capitale versato, esistente dall'ultimo bilancio: € 9.533.414 i.v.
+                    </p>
+                </footer>
+            `;
+            
+            appContainer.innerHTML = headerHtml + quizHtml + footerHtml;
+            
+            const quizData = quizConfig.questions;
+            const quizContainer = document.getElementById('quiz-container');
+            const resultsContainer = document.getElementById('results-container');
+            const introContainer = document.getElementById('intro-container');
+            const questionArea = document.getElementById('question-area');
+            const questionCounterEl = document.getElementById('question-counter');
+            const scoreDisplayEl = document.getElementById('score-display');
+            const questionTextEl = document.getElementById('question-text');
+            const answerButtonsEl = document.getElementById('answer-buttons');
+            const nextBtn = document.getElementById('next-btn');
+            const restartBtn = document.getElementById('restart-btn');
+            let currentQuestionIndex = 0;
+            let score = 0;
+            let userAnswers = [];
+
+            function initializeQuiz() {
+                const introTitle = (quizConfig.introText && quizConfig.introText.trim() !== '') ? quizConfig.title : '';
+                if (quizConfig.introText && quizConfig.introText.trim() !== '') {
+                    introContainer.innerHTML = `
+                        <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4">${introTitle}</h2>
+                        <p class="text-gray-600 mb-8 whitespace-pre-wrap">${quizConfig.introText}</p>
+                        <button id="start-btn" class="btn-gradient text-white font-bold py-3 px-8 rounded-full transition-all duration-300 shadow-md w-full" style="background-image: linear-gradient(to right, ${quizConfig.color.start}, ${quizConfig.color.end})">Inizia il Quiz</button>
+                    `;
+                    const startBtn = document.getElementById('start-btn');
+                    startBtn.addEventListener('click', startQuestions);
+
+                    // ----- MODIFICA AGGIUNTA QUI (START BUTTON) -----
+                    startBtn.addEventListener('click', function() {
+                        if (typeof tC !== 'undefined' && tC.event && typeof tC.event.quiz_veh === 'function') {
+                            tC.event.quiz_veh(this, {
+                                'tipo_quiz': quizConfig.referrer,
+                                'azione': 'start'
+                            });
+                        }
+                    });
+                    // ----- FINE MODIFICA -----
+
+                    introContainer.classList.remove('hidden');
+                    questionArea.classList.add('hidden');
+                    resultsContainer.classList.add('hidden', 'opacity-0');
+                    quizContainer.classList.remove('hidden', 'opacity-0');
+                } else {
+                    introContainer.classList.add('hidden');
+                    startQuestions();
+                }
+            }
+
+            function startQuestions() {
+                currentQuestionIndex = 0;
+                score = 0;
+                userAnswers = [];
+                introContainer.classList.add('hidden');
+                questionArea.classList.remove('hidden');
+                resultsContainer.classList.add('hidden', 'opacity-0');
+                quizContainer.classList.remove('hidden', 'opacity-0');
+                nextBtn.classList.add('hidden');
+                updateScoreDisplay();
+                showQuestion();
+            }
+
+            function showQuestion() {
+                while (answerButtonsEl.firstChild) { answerButtonsEl.removeChild(answerButtonsEl.firstChild); }
+                nextBtn.classList.add('hidden');
+                const currentQuestion = quizData[currentQuestionIndex];
+                questionCounterEl.innerText = `Domanda ${currentQuestionIndex + 1} / ${quizData.length}`;
+                questionTextEl.innerText = currentQuestion.question;
+
+                currentQuestion.answers.forEach(answer => {
+                    const button = document.createElement('button');
+                    button.innerText = answer.text;
+                    button.classList.add('answer-btn', 'w-full', 'text-left', 'p-4', 'rounded-xl', 'border-2', 'border-gray-200', 'hover:bg-gray-100', 'hover:border-blue-500', 'transition-all', 'duration-200', 'font-medium');
+                    button.dataset.correct = answer.correct;
+                    button.addEventListener('click', selectAnswer);
+                    answerButtonsEl.appendChild(button);
+                });
+                
+                questionArea.classList.remove('question-fade-out');
+                questionArea.classList.add('question-fade-in');
+            }
+
+            function selectAnswer(e) {
+                const selectedBtn = e.target;
+                const isCorrect = selectedBtn.dataset.correct === 'true';
+                userAnswers.push({ question: quizData[currentQuestionIndex].question, selected: selectedBtn.innerText, correct: quizData[currentQuestionIndex].answers.find(a => a.correct).text, isCorrect: isCorrect });
+                if (isCorrect) { score++; selectedBtn.classList.add('correct'); } else { selectedBtn.classList.add('incorrect'); }
+                updateScoreDisplay();
+                Array.from(answerButtonsEl.children).forEach(button => { if (button.dataset.correct === 'true') { button.classList.add('correct'); } button.disabled = true; });
+                if (quizData.length > currentQuestionIndex + 1) { nextBtn.innerText = "Prossima Domanda"; } else { nextBtn.innerText = "Vedi Risultati"; }
+                nextBtn.classList.remove('hidden');
+            }
+            
+            function updateScoreDisplay() { scoreDisplayEl.innerText = `Punteggio: ${score}`; }
+
+            function showResults() {
+                quizContainer.classList.add('hidden');
+                resultsContainer.classList.remove('hidden');
+                setTimeout(() => resultsContainer.classList.remove('opacity-0'), 50);
+
+                const finalScoreEl = document.getElementById('final-score');
+                const resultTitleEl = document.getElementById('result-title');
+                const resultMessageEl = document.getElementById('result-message');
+                const resultLinkEl = document.getElementById('result-link');
+                const summaryContainer = document.getElementById('summary-container');
+                summaryContainer.innerHTML = '';
+
+                userAnswers.forEach((answer, index) => {
+                    const summaryItem = document.createElement('div');
+                    summaryItem.classList.add('p-3', 'rounded-lg');
+                    const icon = answer.isCorrect 
+                        ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-2 inline-block" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>`
+                        : `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500 mr-2 inline-block" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>`;
+                    let answerHtml = `<div class="flex items-start"><span class="mr-2">${icon}</span><div><p class="font-semibold">${index + 1}. ${answer.question}</p>`;
+                    if (answer.isCorrect) { summaryItem.classList.add('bg-green-50'); answerHtml += `<p class="text-sm text-gray-700">La tua risposta: ${answer.selected}</p>`; } else { summaryItem.classList.add('bg-red-50'); answerHtml += `<p class="text-sm text-red-700">La tua risposta: ${answer.selected}</p><p class="text-sm text-green-700">Risposta corretta: ${answer.correct}</p>`; }
+                    answerHtml += '</div></div>';
+                    summaryItem.innerHTML = answerHtml;
+                    summaryContainer.appendChild(summaryItem);
+                });
+
+                finalScoreEl.innerText = `${score} / ${quizData.length}`;
+                const scorePercentage = (quizData.length > 0) ? (score / quizData.length) * 100 : 0;
+                let resultConfig;
+                if (scorePercentage >= quizConfig.highScoreThreshold) { resultConfig = quizConfig.results.high; } else if (scorePercentage >= quizConfig.mediumScoreThreshold) { resultConfig = quizConfig.results.medium; } else { resultConfig = quizConfig.results.low; }
+                resultTitleEl.innerText = resultConfig.title;
+                resultMessageEl.innerText = resultConfig.message;
+                resultLinkEl.href = resultConfig.ctaLink;
+                resultLinkEl.innerText = resultConfig.ctaText;
+
+                // ----- MODIFICA AGGIUNTA QUI (FINISH BUTTON) -----
+                resultLinkEl.addEventListener('click', function() {
+                    if (typeof tC !== 'undefined' && tC.event && typeof tC.event.quiz_veh === 'function') {
+                        tC.event.quiz_veh(this, {
+                            'tipo_quiz': quizConfig.referrer,
+                            'azione': 'finish'
+                        });
+                    }
+                });
+                // ----- FINE MODIFICA -----
+            }
+
+            function handleNextButton() {
+                currentQuestionIndex++;
+                questionArea.classList.add('question-fade-out');
+                questionArea.classList.remove('question-fade-in');
+                setTimeout(() => { showQuestion(); }, 300);
+            }
+
+            nextBtn.addEventListener('click', () => { if (quizData.length > currentQuestionIndex + 1) { handleNextButton(); } else { showResults(); } });
+            restartBtn.addEventListener('click', initializeQuiz);
+            initializeQuiz();
+        }
+
+        const activeQuiz = getQuizFromURL();
+        buildAndRunQuiz(activeQuiz);
+    </script>
+</body>
+</html>
